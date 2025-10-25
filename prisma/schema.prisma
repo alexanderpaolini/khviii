@@ -14,18 +14,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
-}
-
 // Necessary for Next auth
 model Account {
     id                       String  @id @default(cuid())
@@ -62,7 +50,24 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    contact       Contact?  // one-to-one back relation
+}
+
+model Contact {
+    id          String   @id @default(cuid())
+    userId      String   @unique
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    firstName   String?
+    lastName    String?
+    nickname    String?
+    phoneNumber String?
+    email       String?
+    instagram   String?
+    discord     String?
+    pronouns    String?
+    company     String?
+    address     String?
+    birthday    DateTime?
 }
 
 model VerificationToken {
