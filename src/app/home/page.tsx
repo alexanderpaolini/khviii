@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "~/server/auth";
 import { HydrateClient } from "~/trpc/server";
+import { FriendsList } from "../_components/Friend";
+import { ContactInput } from "../_components/Contact";
+import { SignOutButton } from "../_components/Auth";
 
 export default async function Home() {
   const session = await auth();
@@ -16,14 +18,13 @@ export default async function Home() {
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             CardDav
           </h1>
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex flex-col items-center justify-center gap-4">
-              <Link
-                href={"/api/auth/signout"}
-                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-              >
-                Sign Out
-              </Link>
+          <div className="flex w-full flex-col items-center gap-8 sm:flex-row sm:items-start sm:justify-center">
+            <div className="flex w-full max-w-md flex-col items-center gap-4">
+              <ContactInput />
+              <SignOutButton />
+            </div>
+            <div className="w-full max-w-md">
+              <FriendsList />
             </div>
           </div>
         </div>
