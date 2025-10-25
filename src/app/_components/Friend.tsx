@@ -1,6 +1,8 @@
 "use client";
 
+import type { Contact } from "@prisma/client";
 import { Label } from "@radix-ui/react-label";
+import { Cross, X } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   DialogFooter,
@@ -13,76 +15,110 @@ import {
   DialogClose,
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
-export function FriendsList() {
-  type FriendType = {
-    id: string;
-    name: string;
-    nickname?: string;
-    email: string;
+function Friend({ friend }: { friend: Contact }) {
+  const initials = friend.firstName[0] + (friend.lastName?.[0] ?? "");
+
+  const handleRemove = (id: string) => {
+    console.log("Remove friend", id);
   };
 
-  const friends: FriendType[] = [
-    {
-      id: "1",
-      name: "Ava Thompson",
-      nickname: "Ava",
-      email: "ava@example.com",
-    },
-    {
-      id: "2",
-      name: "Liam Johnson",
-      nickname: "LJ",
-      email: "liam@example.com",
-    },
-    { id: "3", name: "Maya Patel", email: "maya@example.com" },
-    { id: "3", name: "Maya Patel", email: "maya@example.com" },
-    { id: "3", name: "Maya Patel", email: "maya@example.com" },
-    { id: "3", name: "Maya Patel", email: "maya@example.com" },
-    { id: "3", name: "Maya Patel", email: "maya@example.com" },
-    { id: "3", name: "Maya Patel", email: "maya@example.com" },
-    { id: "3", name: "Maya Patel", email: "maya@example.com" },
-    { id: "3", name: "Maya Patel", email: "maya@example.com" },
-  ];
-
-  function Friend({ friend }: { friend: FriendType }) {
-    const initials = friend.name
-      .split(" ")
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
-
-    const handleRemove = (id: string) => {
-      console.log("Remove friend", id);
-    };
-
-    return (
-      <div className="flex items-center justify-between gap-4 rounded-md bg-white/3 p-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/8 text-sm font-semibold">
-            {initials}
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">
-              {friend.name} {friend.nickname ? `(${friend.nickname})` : ""}
-            </span>
-            <span className="text-xs text-white/60">{friend.email}</span>
-          </div>
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-md bg-white/3 p-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/8 text-sm font-semibold">
+          {initials}
         </div>
-
-        <button
-          type="button"
-          onClick={() => handleRemove(friend.id)}
-          title="Remove friend"
-          aria-label={`Remove ${friend.name}`}
-          className="ml-2 rounded-full bg-white/6 px-2 py-1 text-sm font-semibold transition hover:bg-white/10"
-        >
-          ✕
-        </button>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">
+            {friend.firstName} {friend.lastName}{" "}
+            {friend.nickname ? `(${friend.nickname})` : ""}
+          </span>
+          <span className="text-xs font-light">{friend.email}</span>
+        </div>
       </div>
-    );
-  }
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button size={"icon-sm"}>
+            <X />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Remove Friend</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
+export function FriendsList() {
+  const friends: Contact[] = [
+    {
+      firstName: "Deandre",
+      lastName: "Bailey",
+      nickname: "Dre",
+      email: "dre@example.com",
+      id: "",
+      userId: "1231231321",
+      phoneNumber: null,
+      instagram: null,
+      discord: null,
+      pronouns: null,
+      company: null,
+      address: null,
+      birthday: null,
+    },
+    {
+      firstName: "Alex",
+      lastName: "Paolini",
+      nickname: "alex",
+      email: "alex@example.com",
+      id: "",
+      userId: "1231231321",
+      phoneNumber: null,
+      instagram: null,
+      discord: null,
+      pronouns: null,
+      company: null,
+      address: null,
+      birthday: null,
+    },
+    {
+      firstName: "Drake",
+      lastName: "Aust",
+      nickname: "diddy",
+      email: "dd@example.com",
+      id: "",
+      userId: "1231231321",
+      phoneNumber: null,
+      instagram: null,
+      discord: null,
+      pronouns: null,
+      company: null,
+      address: null,
+      birthday: null,
+    },
+    {
+      firstName: "Borboss",
+      lastName: "borboss",
+      nickname: "bbs",
+      email: "borboss@example.com",
+      id: "",
+      userId: "1231231321",
+      phoneNumber: null,
+      instagram: null,
+      discord: null,
+      pronouns: null,
+      company: null,
+      address: null,
+      birthday: null,
+    },
+  ];
 
   return (
     <div className="w-full max-w-md">
@@ -112,7 +148,7 @@ export function FriendDialogue() {
     <Dialog>
       <form>
         <DialogTrigger asChild>
-          <Button variant="outline">Add Friend</Button>
+          <Button>Add Friend</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -134,7 +170,7 @@ export function FriendDialogue() {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button>Cancel</Button>
             </DialogClose>
             <Button type="submit">Submit</Button>
           </DialogFooter>
