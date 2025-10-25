@@ -51,6 +51,14 @@ model User {
     accounts      Account[]
     sessions      Session[]
     contact       Contact?  // one-to-one back relation
+
+    // Friend relationships
+    friendsA      Friend[]  @relation("friendsA")
+    friendsB      Friend[]  @relation("friendsB")
+
+    // Friend requests
+    requestsSent     FriendRequest[] @relation("sentRequests")
+    requestsReceived FriendRequest[] @relation("receivedRequests")
 }
 
 model Contact {
@@ -68,6 +76,38 @@ model Contact {
     company     String?
     address     String?
     birthday    DateTime?
+}
+
+model Friend {
+    id        String   @id @default(cuid())
+    userAId   String
+    userBId   String
+    userA     User     @relation("friendsA", fields: [userAId], references: [id], onDelete: Cascade)
+    userB     User     @relation("friendsB", fields: [userBId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+
+    @@unique([userAId, userBId])
+    // Note: enforce ordering (e.g. always store smaller id first) at application level
+}
+
+enum FriendRequestStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+}
+
+model FriendRequest {
+    id          String             @id @default(cuid())
+    requesterId String
+    receiverId  String
+    requester   User               @relation("sentRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+    receiver    User               @relation("receivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+    status      FriendRequestStatus @default(PENDING)
+    message     String?
+    createdAt   DateTime           @default(now())
+    respondedAt DateTime?
+
+    @@unique([requesterId, receiverId])
 }
 
 model VerificationToken {
