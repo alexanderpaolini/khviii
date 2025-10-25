@@ -5,11 +5,14 @@ import { HydrateClient } from "~/trpc/server";
 import { FriendsList } from "../_components/Friend";
 import { ContactInput } from "../_components/Contact";
 import { SignOutButton } from "../_components/Auth";
+import { api } from "~/trpc/server";
 
 export default async function Home() {
   const session = await auth();
 
   if (!session) redirect("/");
+
+  await api.contact.get.prefetch();
 
   return (
     <HydrateClient>

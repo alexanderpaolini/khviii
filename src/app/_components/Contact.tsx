@@ -1,9 +1,14 @@
+"use client";
+
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { InputGroup } from "~/components/ui/input-group";
 import { Label } from "~/components/ui/label";
+import { api } from "~/trpc/react";
 
 export function ContactInput() {
+  const { data } = api.contact.get.useQuery();
+
   return (
     <form className="w-full max-w-md">
       <div className="rounded-xl bg-white/5 p-6 shadow-md backdrop-blur-sm">
@@ -18,6 +23,7 @@ export function ContactInput() {
               name="nickname"
               placeholder="Nickname"
               aria-label="Nickname"
+              defaultValue={data?.nickname ?? ""}
             />
           </InputGroup>
 
@@ -27,6 +33,7 @@ export function ContactInput() {
                 name="firstName"
                 placeholder="First name"
                 aria-label="First name"
+                defaultValue={data?.firstName ?? ""}
               />
             </InputGroup>
             <InputGroup>
@@ -34,6 +41,7 @@ export function ContactInput() {
                 name="lastName"
                 placeholder="Last name"
                 aria-label="Last name"
+                defaultValue={data?.lastName ?? ""}
               />
             </InputGroup>
           </div>
@@ -44,6 +52,7 @@ export function ContactInput() {
               type="email"
               placeholder="Email"
               aria-label="Email"
+              defaultValue={data?.email ?? ""}
             />
           </InputGroup>
 

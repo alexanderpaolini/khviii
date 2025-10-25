@@ -1,6 +1,6 @@
 "use client";
 
-import type { Contact } from "@prisma/client";
+import type { Contact, Friend } from "@prisma/client";
 import { Label } from "@radix-ui/react-label";
 import { Cross, X } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -20,6 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { api } from '~/trpc/react';
 
 function Friend({ friend }: { friend: Contact }) {
   const initials = friend.firstName[0] + (friend.lastName?.[0] ?? "");
@@ -57,6 +58,10 @@ function Friend({ friend }: { friend: Contact }) {
 }
 
 export function FriendsList() {
+  const { data } = api.friend.getAll.useQuery();
+  
+  console.log(data)
+  
   const friends: Contact[] = [
     {
       firstName: "Deandre",
