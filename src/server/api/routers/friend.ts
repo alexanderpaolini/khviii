@@ -32,13 +32,6 @@ export const friendRouter = createTRPCRouter({
       const userId = ctx.session.user.id;
       const friendCode = input.friendCode.trim();
 
-      if (!friendCode) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Friend code is required",
-        });
-      }
-
       const otherUser = await ctx.db.user.findFirst({
         where: { friendCode },
       });
@@ -78,8 +71,36 @@ export const friendRouter = createTRPCRouter({
           userAId: userId,
           userBId: otherUser.id,
         },
+        include: {
+          userB: { include: { contact: true } },
+        },
       });
 
       return created;
+    }),
+
+  remove: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const otherId = input.id;
+
+      const result = await ctx.db.friend.deleteMany({
+        where: {
+          OR: [
+            { userAId: userId, userBId: otherId },
+            { userAId: otherId, userBId: userId },
+          ],
+        },
+      });
+
+      if (result.count === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Friend record not found",
+        });
+      }
+
+      return { success: true };
     }),
 });
