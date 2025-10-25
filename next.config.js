@@ -5,6 +5,16 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  skipTrailingSlashRedirect: true,
+  async rewrites() {
+    return [
+      {
+        source: "/.well-known/carddav",
+        destination: "/api/well-known/carddav",
+      },
+    ];
+  },
+};
 
 export default config;
