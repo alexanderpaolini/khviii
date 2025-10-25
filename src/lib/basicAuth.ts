@@ -13,7 +13,7 @@ export interface AuthResult {
 export function validateBasicAuth(req: NextApiRequest): AuthResult {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Basic ")) {
+  if (!authHeader?.startsWith("Basic ")) {
     return { authenticated: false };
   }
 
