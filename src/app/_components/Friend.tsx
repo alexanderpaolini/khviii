@@ -1,8 +1,10 @@
 "use client";
 
 import type { Contact, Friend } from "@prisma/client";
+import { useState, type FormEvent } from "react";
 import { Label } from "@radix-ui/react-label";
 import { Cross, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   DialogFooter,
@@ -20,13 +22,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { api } from '~/trpc/react';
+import { api } from "~/trpc/react";
 
 function Friend({ friend }: { friend: Contact }) {
   const initials = friend.firstName[0] + (friend.lastName?.[0] ?? "");
 
-  const handleRemove = (id: string) => {
-    console.log("Remove friend", id);
+  const handleRemove = () => {
+    toast(`REMOVE ${friend.userId}`);
   };
 
   return (
@@ -45,8 +47,15 @@ function Friend({ friend }: { friend: Contact }) {
       </div>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button size={"icon-sm"}>
-            <X />
+          <Button
+            size="icon-sm"
+            aria-label={`Remove ${friend.firstName}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemove();
+            }}
+          >
+            <X size={16} />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
@@ -58,72 +67,9 @@ function Friend({ friend }: { friend: Contact }) {
 }
 
 export function FriendsList() {
-  const { data } = api.friend.getAll.useQuery();
-  
-  console.log(data)
-  
-  const friends: Contact[] = [
-    {
-      firstName: "Deandre",
-      lastName: "Bailey",
-      nickname: "Dre",
-      email: "dre@example.com",
-      id: "",
-      userId: "1231231321",
-      phoneNumber: null,
-      instagram: null,
-      discord: null,
-      pronouns: null,
-      company: null,
-      address: null,
-      birthday: null,
-    },
-    {
-      firstName: "Alex",
-      lastName: "Paolini",
-      nickname: "alex",
-      email: "alex@example.com",
-      id: "",
-      userId: "1231231321",
-      phoneNumber: null,
-      instagram: null,
-      discord: null,
-      pronouns: null,
-      company: null,
-      address: null,
-      birthday: null,
-    },
-    {
-      firstName: "Drake",
-      lastName: "Aust",
-      nickname: "diddy",
-      email: "dd@example.com",
-      id: "",
-      userId: "1231231321",
-      phoneNumber: null,
-      instagram: null,
-      discord: null,
-      pronouns: null,
-      company: null,
-      address: null,
-      birthday: null,
-    },
-    {
-      firstName: "Borboss",
-      lastName: "borboss",
-      nickname: "bbs",
-      email: "borboss@example.com",
-      id: "",
-      userId: "1231231321",
-      phoneNumber: null,
-      instagram: null,
-      discord: null,
-      pronouns: null,
-      company: null,
-      address: null,
-      birthday: null,
-    },
-  ];
+  const { data, isLoading } = api.friend.getAll.useQuery();
+
+  const friends: Contact[] = data ?? [];
 
   return (
     <div className="w-full max-w-md">
@@ -147,40 +93,51 @@ export function FriendsList() {
     </div>
   );
 }
-
 export function FriendDialogue() {
+  const [friendCode, setFriendCode] = useState<undefined | string>(undefined);
+
+  function handleSubmit() {
+    if (!friendCode) {
+      toast.error("Missing friend code");
+      return;
+    }
+
+    toast(`ADD ${friendCode}`);
+  }
+
   return (
     <Dialog>
-      <form>
-        <DialogTrigger asChild>
-          <Button>Add Friend</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add Friend</DialogTitle>
-            <DialogDescription>
-              Add a friend by entering their friend code below.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4">
-            <div className="grid gap-3">
-              <Label htmlFor="friend-code">Friend Code</Label>
-              <Input
-                id="friend-code"
-                name="friendCode"
-                placeholder="alpha-beta-omega"
-                aria-label="Friend Code"
-              />
-            </div>
+      <DialogTrigger asChild>
+        <Button>Add Friend</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add Friend</DialogTitle>
+          <DialogDescription>
+            Add a friend by entering their friend code below.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-3">
+            <Label htmlFor="friend-code">Friend Code</Label>
+            <Input
+              id="friend-code"
+              name="friendCode"
+              placeholder="alpha-beta-omega"
+              aria-label="Friend Code"
+              onChange={(e) => setFriendCode(e.target.value)}
+            />
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button>Cancel</Button>
-            </DialogClose>
-            <Button type="submit">Submit</Button>
-          </DialogFooter>
-        </DialogContent>
-      </form>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button>Cancel</Button>
+          </DialogClose>
+          <Button type="submit" onClick={() => handleSubmit()}>
+            Submit
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

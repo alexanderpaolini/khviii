@@ -2,118 +2,119 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+  // Further reading:
+  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+  url      = env("DATABASE_URL")
 }
 
 // Necessary for Next auth
 model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String? // @db.Text
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? // @db.Text
+  access_token             String? // @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? // @db.Text
+  session_state            String?
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refresh_token_expires_in Int?
 
-    @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    contact       Contact?  // one-to-one back relation
+  id            String    @id @default(cuid())
+  friendCode    String    @default(dbgenerated("substr(md5(random()::text), 1, 6)")) @db.VarChar(6)
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  contact       Contact? // one-to-one back relation
 
-    // Friend relationships
-    friendsA      Friend[]  @relation("friendsA")
-    friendsB      Friend[]  @relation("friendsB")
+  // Friend relationships
+  friendsA Friend[] @relation("friendsA")
+  friendsB Friend[] @relation("friendsB")
 
-    // Friend requests
-    requestsSent     FriendRequest[] @relation("sentRequests")
-    requestsReceived FriendRequest[] @relation("receivedRequests")
+  // Friend requests
+  requestsSent     FriendRequest[] @relation("sentRequests")
+  requestsReceived FriendRequest[] @relation("receivedRequests")
 }
 
 model Contact {
-    id          String   @id @default(cuid())
-    userId      String   @unique
-    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    firstName   String
-    lastName    String?
-    nickname    String?
-    phoneNumber String?
-    email       String?
-    instagram   String?
-    discord     String?
-    pronouns    String?
-    company     String?
-    address     String?
-    birthday    DateTime?
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName   String
+  lastName    String?
+  nickname    String?
+  phoneNumber String?
+  email       String?
+  instagram   String?
+  discord     String?
+  pronouns    String?
+  company     String?
+  address     String?
+  birthday    DateTime?
 }
 
 model Friend {
-    id        String   @id @default(cuid())
-    userAId   String
-    userBId   String
-    userA     User     @relation("friendsA", fields: [userAId], references: [id], onDelete: Cascade)
-    userB     User     @relation("friendsB", fields: [userBId], references: [id], onDelete: Cascade)
-    createdAt DateTime @default(now())
+  id        String   @id @default(cuid())
+  userAId   String
+  userBId   String
+  userA     User     @relation("friendsA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User     @relation("friendsB", fields: [userBId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  // Note: enforce ordering (e.g. always store smaller id first) at application level
 
-    @@unique([userAId, userBId])
-    // Note: enforce ordering (e.g. always store smaller id first) at application level
+  @@unique([userAId, userBId])
 }
 
 enum FriendRequestStatus {
-    PENDING
-    ACCEPTED
-    REJECTED
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
 model FriendRequest {
-    id          String             @id @default(cuid())
-    requesterId String
-    receiverId  String
-    requester   User               @relation("sentRequests", fields: [requesterId], references: [id], onDelete: Cascade)
-    receiver    User               @relation("receivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
-    status      FriendRequestStatus @default(PENDING)
-    message     String?
-    createdAt   DateTime           @default(now())
-    respondedAt DateTime?
+  id          String              @id @default(cuid())
+  requesterId String
+  receiverId  String
+  requester   User                @relation("sentRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver    User                @relation("receivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status      FriendRequestStatus @default(PENDING)
+  message     String?
+  createdAt   DateTime            @default(now())
+  respondedAt DateTime?
 
-    @@unique([requesterId, receiverId])
+  @@unique([requesterId, receiverId])
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
 }

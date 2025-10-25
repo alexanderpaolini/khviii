@@ -13,6 +13,7 @@ export default async function Home() {
   if (!session) redirect("/");
 
   await api.contact.get.prefetch();
+  await api.friend.getAll.prefetch();
 
   return (
     <HydrateClient>

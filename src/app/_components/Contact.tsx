@@ -5,63 +5,85 @@ import { Input } from "~/components/ui/input";
 import { InputGroup } from "~/components/ui/input-group";
 import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
-
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 export function ContactInput() {
   const { data } = api.contact.get.useQuery();
 
+  const [nickname, setNickname] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    if (!data) return;
+    setNickname(data.nickname ?? "");
+    setFirstName(data.firstName ?? "");
+    setLastName(data.lastName ?? "");
+    setEmail(data.email ?? "");
+  }, [data]);
+
+  function handleSave() {
+    toast(JSON.stringify({ nickname, firstName, lastName, email }));
+  }
+
   return (
-    <form className="w-full max-w-md">
-      <div className="rounded-xl bg-white/5 p-6 shadow-md backdrop-blur-sm">
-        <h2 className="mb-2 text-lg font-semibold">Your Contact</h2>
-        <p className="mb-4 text-sm font-light">
-          Fill out your contact to automatically sync with friends.
-        </p>
+    <div className="rounded-xl bg-white/5 p-6 shadow-md backdrop-blur-sm">
+      <h2 className="mb-2 text-lg font-semibold">Your Contact</h2>
+      <p className="mb-4 text-sm font-light">
+        Fill out your contact to automatically sync with friends.
+      </p>
 
-        <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
+        <InputGroup>
+          <Input
+            name="nickname"
+            placeholder="Nickname"
+            aria-label="Nickname"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+          />
+        </InputGroup>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <InputGroup>
             <Input
-              name="nickname"
-              placeholder="Nickname"
-              aria-label="Nickname"
-              defaultValue={data?.nickname ?? ""}
+              name="firstName"
+              placeholder="First name"
+              aria-label="First name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
             />
           </InputGroup>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <InputGroup>
-              <Input
-                name="firstName"
-                placeholder="First name"
-                aria-label="First name"
-                defaultValue={data?.firstName ?? ""}
-              />
-            </InputGroup>
-            <InputGroup>
-              <Input
-                name="lastName"
-                placeholder="Last name"
-                aria-label="Last name"
-                defaultValue={data?.lastName ?? ""}
-              />
-            </InputGroup>
-          </div>
-
           <InputGroup>
             <Input
-              name="email"
-              type="email"
-              placeholder="Email"
-              aria-label="Email"
-              defaultValue={data?.email ?? ""}
+              name="lastName"
+              placeholder="Last name"
+              aria-label="Last name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
             />
           </InputGroup>
+        </div>
 
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <Button>Save</Button>
-            <Label>Optional fields can be left blank</Label>
-          </div>
+        <InputGroup>
+          <Input
+            name="email"
+            type="email"
+            placeholder="Email"
+            aria-label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </InputGroup>
+
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <Button type="submit" onClick={() => handleSave()}>
+            Save
+          </Button>
+          <Label>Optional fields can be left blank</Label>
         </div>
       </div>
-    </form>
+    </div>
   );
 }
