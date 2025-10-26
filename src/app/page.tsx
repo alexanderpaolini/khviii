@@ -18,9 +18,7 @@ export default async function Home() {
               DAVe Card
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
-              A lightweight contact server and social contacts manager — share a
-              single contact, sync it with your devices, and connect with
-              friends.
+              A lightweight contacts server and social contacts manager — add friends once and stay connected forever.
             </p>
 
             <div className="my-8 flex items-center justify-center gap-4">
@@ -69,7 +67,7 @@ export default async function Home() {
                 <h3 className="mb-2 text-lg font-semibold">Sync Contacts</h3>
                 <p className="text-sm text-gray-500">
                   Use any CardDAV client to sync your contact across devices —
-                  get live updates when you change your card.
+                  get live updates when someone changes their card.
                 </p>
               </div>
 
@@ -77,7 +75,7 @@ export default async function Home() {
                 <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-white/8" />
                 <h3 className="mb-2 text-lg font-semibold">Share Safely</h3>
                 <p className="text-sm text-gray-500">
-                  Send friend requests, exchange friend codes, and control who
+                  Exchange friend codes, send friend requests, and control who
                   has your contact.
                 </p>
               </div>
