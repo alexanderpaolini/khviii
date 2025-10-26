@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { api } from "~/trpc/react";
-import { Bell } from "lucide-react";
+import { Plus } from "lucide-react";
 import { FriendRequestSidebar } from "./FriendRequestSidebar";
 
 export function FriendRequestButton() {
@@ -21,7 +21,7 @@ export function FriendRequestButton() {
           className="relative h-14 w-14 rounded-full bg-blue-600 shadow-lg hover:bg-blue-700"
           size="icon"
         >
-          <Bell className="h-6 w-6 text-white" />
+          <Plus className="h-6 w-6 text-white" />
           {requestCount > 0 && (
             <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
               {requestCount > 9 ? "9+" : requestCount}

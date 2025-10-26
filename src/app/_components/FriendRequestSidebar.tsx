@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { api } from "~/trpc/react";
-import { X, User, Check } from "lucide-react";
+import { X, User, Check, Search, Plus } from "lucide-react";
 
 interface FriendRequestSidebarProps {
   isOpen: boolean;
@@ -18,6 +19,20 @@ export function FriendRequestSidebar({
   const { data: pendingRequests, isLoading } =
     api.friend.getPendingRequests.useQuery();
   const respondToRequest = api.friend.respondToRequest.useMutation();
+  const sendFriendRequest = api.friend.sendFriendRequest.useMutation();
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  
+  // Search users with debouncing
+  const { data: searchResults, isLoading: isSearching } = api.friend.searchUsers.useQuery(
+    { query: searchQuery },
+    { 
+      enabled: searchQuery.length > 2,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   // Prevent body scroll when sidebar is open
   useEffect(() => {
@@ -49,6 +64,23 @@ export function FriendRequestSidebar({
     } catch (error) {
       console.error("Failed to respond to friend request:", error);
     }
+  };
+
+  const handleSendFriendRequest = async (friendCode: string, message?: string) => {
+    try {
+      await sendFriendRequest.mutateAsync({ friendCode, message });
+      console.log("Friend request sent successfully!");
+      setSearchQuery("");
+      setShowSearchResults(false);
+    } catch (error) {
+      console.error("Failed to send friend request:", error);
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setShowSearchResults(value.length > 2);
   };
 
   return (

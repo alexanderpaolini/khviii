@@ -73,6 +73,7 @@ model Contact {
   email       String?
   instagram   String?
   discord     String?
+  linkedin    String?
   pronouns    String?
   company     String?
   address     String?

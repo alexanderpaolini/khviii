@@ -96,18 +96,36 @@ export function FriendsList() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="rounded-xl bg-white/5 p-6 shadow-md backdrop-blur-sm">
-        <h2 className="mb-2 text-lg font-semibold">Friends</h2>
+      <div className="rounded-xl bg-white/5 p-8 shadow-lg backdrop-blur-sm border border-white/10 h-full">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            
+            <h2 className="text-lg font-bold text-black">Friends</h2>
+          </div>
+          <p className="text-gray-300 text-sm leading-relaxed">
+            Manage your friends and send new friend requests.
+          </p>
+        </div>
 
-        <div className="flex flex-col gap-3">
-          <div className="max-h-[40vh] overflow-auto pr-2">
+        <div className="flex flex-col h-[calc(100%-6rem)]">
+          {/* Friends List - Scrollable */}
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 pr-2">
             <div className="flex flex-col gap-3">
-              {friends.map((f) => (
-                <Friend key={f.id} friend={f} />
-              ))}
+              {friends.length > 0 ? (
+                friends.map((f) => (
+                  <Friend key={f.id} friend={f} />
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  <p className="text-sm">No friends yet</p>
+                  <p className="text-xs mt-1">Send friend requests to get started!</p>
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Add Friend Button */}
+          <div className="pt-4 border-t border-white/10 mt-4">
           <div className="mt-2 flex items-center justify-between px-2">
             <span className="text-sm font-medium">
               Friend Code:
