@@ -45,12 +45,27 @@ export const authConfig = {
   ],
   adapter: PrismaAdapter(db),
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    session: async ({ session, user }) => {
+      const contact = await db.contact.findFirst({ where: { 
+        userId: user.id
+      }});
+
+      if (contact == null) {
+        await db.contact.create({
+          data: {
+            userId: user.id,
+            firstName: user.name ?? "First Name",
+          }
+        })
+      }
+
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+        },
+      };
+    },
   },
 } satisfies NextAuthConfig;
