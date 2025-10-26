@@ -13,10 +13,10 @@ function escapeXml(input?: string) {
   return input.replace(/[&<>"']/g, (ch) => map[ch] ?? ch);
 }
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
-): void {
+): Promise<void> {
   const { id } = req.query;
 
   if (!id || Array.isArray(id)) {
@@ -39,7 +39,7 @@ export default function handler(
   }
 
   // Validate authentication
-  const auth = validateBasicAuth(req);
+  const auth = await validateBasicAuth(req);
   if (!auth.authenticated || !auth.userId) {
     sendUnauthorized(res);
     return;
@@ -56,7 +56,7 @@ export default function handler(
   const contactsHref = `/api/addressbooks/users/${userId}/contacts/`;
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">
+<multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/">
   <response>
     <href>/api/addressbooks/users/${userId}/</href>
     <propstat>
@@ -79,6 +79,8 @@ export default function handler(
         </resourcetype>
         <displayname>Contacts</displayname>
         <C:addressbook-description>Auto-updating contacts</C:addressbook-description>
+        <CS:getctag>1</CS:getctag>
+        <sync-token>1</sync-token>
       </prop>
       <status>HTTP/1.1 200 OK</status>
     </propstat>
