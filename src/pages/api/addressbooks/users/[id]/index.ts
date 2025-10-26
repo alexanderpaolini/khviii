@@ -55,6 +55,8 @@ export default async function handler(
   const userId = escapeXml(id);
   const contactsHref = `/api/addressbooks/users/${userId}/contacts/`;
 
+  // Note: We use a placeholder ctag here since calculating it requires DB query
+  // Clients will fetch the real ctag when they PROPFIND the contacts collection with Depth:0
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/">
   <response>
@@ -79,8 +81,6 @@ export default async function handler(
         </resourcetype>
         <displayname>Contacts</displayname>
         <C:addressbook-description>Auto-updating contacts</C:addressbook-description>
-        <CS:getctag>1</CS:getctag>
-        <sync-token>1</sync-token>
       </prop>
       <status>HTTP/1.1 200 OK</status>
     </propstat>

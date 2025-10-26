@@ -36,6 +36,48 @@ function generateETag(contact: ContactData): string {
   return `"${contact.id}-${hash.substring(0, 8)}"`;
 }
 
+function generateCTag(contacts: ContactData[]): string {
+  // CTag changes when collection changes (add/edit/delete)
+  // Hash the list of contact IDs and their ETags
+  const collectionData = contacts
+    .map(c => generateETag(c))
+    .sort()
+    .join(',');
+
+  const hash = crypto.createHash("md5").update(collectionData).digest("hex");
+  return hash.substring(0, 16);
+}
+
+function encodeSyncToken(contacts: ContactData[]): string {
+  // Encode contact IDs and their ETags into the sync token
+  // Format: base64(contactId1:etag1,contactId2:etag2,...)
+  const data = contacts
+    .map(c => `${c.id}:${generateETag(c)}`)
+    .sort()
+    .join(',');
+  return Buffer.from(data, 'utf-8').toString('base64');
+}
+
+function decodeSyncToken(token: string): Map<string, string> {
+  // Decode sync token to get previous contact IDs and ETags
+  try {
+    const decoded = Buffer.from(token, 'base64').toString('utf-8');
+    const map = new Map<string, string>();
+    if (decoded) {
+      decoded.split(',').forEach(entry => {
+        const [id, etag] = entry.split(':');
+        if (id && etag) {
+          map.set(id, etag);
+        }
+      });
+    }
+    return map;
+  } catch (err) {
+    // Invalid token, return empty map
+    return new Map();
+  }
+}
+
 interface ContactData {
   id: string;
   firstName: string | null;
@@ -148,8 +190,54 @@ export default async function handler(
 
   // Handle Depth: 0 - return collection properties only (for ctag check)
   if (depth === "0" && req.method === "PROPFIND") {
-    console.log(`[CONTACTS] Returning Depth:0 response with ctag`);
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+    try {
+      // Need to fetch contacts to generate accurate CTag
+      const user = await db.user.findUnique({
+        where: { id: id },
+        include: {
+          friendsA: {
+            include: {
+              userB: {
+                include: { contact: true },
+              },
+            },
+          },
+          friendsB: {
+            include: {
+              userA: {
+                include: { contact: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        res.status(404).send("User not found");
+        return;
+      }
+
+      const friendContacts: ContactData[] = [];
+      for (const friendship of user.friendsA) {
+        if (friendship.userB.contact) {
+          friendContacts.push(friendship.userB.contact);
+        }
+      }
+      for (const friendship of user.friendsB) {
+        if (friendship.userA.contact) {
+          friendContacts.push(friendship.userA.contact);
+        }
+      }
+
+      const ctag = generateCTag(friendContacts);
+      const syncToken = encodeSyncToken(friendContacts);
+      console.log(`[CONTACTS] Returning Depth:0 response with ctag: ${ctag} (${friendContacts.length} contacts)`);
+      friendContacts.forEach(c => {
+        const name = `${c.firstName} ${c.lastName}`.trim();
+        console.log(`[CONTACTS]   Depth:0 - ${name} (${c.id})`);
+      });
+
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/">
   <response>
     <href>/api/addressbooks/users/${userId}/contacts/</href>
@@ -160,19 +248,24 @@ export default async function handler(
           <C:addressbook/>
         </resourcetype>
         <displayname>Contacts</displayname>
-        <CS:getctag>1</CS:getctag>
-        <sync-token>1</sync-token>
+        <CS:getctag>${ctag}</CS:getctag>
+        <sync-token>${syncToken}</sync-token>
       </prop>
       <status>HTTP/1.1 200 OK</status>
     </propstat>
   </response>
 </multistatus>`.trim();
 
-    res.status(207);
-    res.setHeader("Content-Type", "application/xml; charset=utf-8");
-    res.setHeader("DAV", "1, 2, 3, addressbook");
-    res.send(xml);
-    return;
+      res.status(207);
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
+      res.setHeader("DAV", "1, 2, 3, addressbook");
+      res.send(xml);
+      return;
+    } catch (error) {
+      console.error("Database error:", error);
+      res.status(500).send("Internal Server Error");
+      return;
+    }
   }
 
   // Query database for user and their friends' contacts
@@ -220,9 +313,83 @@ export default async function handler(
       }
     }
 
-    // Handle REPORT method - returns vCard data inline
+    // Handle REPORT method
     if (req.method === "REPORT") {
-      console.log(`[CONTACTS] REPORT returning ${friendContacts.length} contacts`);
+      // Check if this is a sync-collection request
+      const requestBody = req.body?.toString() || '';
+      const isSyncCollection = requestBody.includes('sync-collection') || requestBody.includes('sync-token');
+
+      if (isSyncCollection) {
+        // Extract the old sync-token from request
+        const oldTokenMatch = requestBody.match(/<sync-token>(.*?)<\/sync-token>/);
+        const oldSyncToken = oldTokenMatch ? oldTokenMatch[1] : null;
+
+        // Decode old sync token to get previous contact IDs
+        const previousContacts = oldSyncToken ? decodeSyncToken(oldSyncToken) : new Map<string, string>();
+
+        // Generate new sync token based on current state
+        const newSyncToken = encodeSyncToken(friendContacts);
+
+        // Build current contact ID set
+        const currentContactIds = new Set(friendContacts.map(c => c.id));
+
+        // Find deleted contacts (in previous but not in current)
+        const deletedContactIds = Array.from(previousContacts.keys()).filter(
+          id => !currentContactIds.has(id)
+        );
+
+        console.log(`[CONTACTS] Sync-collection REPORT - Old token: ${oldSyncToken?.substring(0, 20)}...`);
+        console.log(`[CONTACTS] Previous: ${previousContacts.size} contacts, Current: ${friendContacts.length} contacts`);
+        console.log(`[CONTACTS] Deleted: ${deletedContactIds.length} contacts`);
+        if (deletedContactIds.length > 0) {
+          console.log(`[CONTACTS] Deleted IDs: ${deletedContactIds.join(', ')}`);
+        }
+
+        // Build response entries for current contacts
+        const currentEntries = friendContacts.map((contact) => {
+          const href = `/api/addressbooks/users/${userId}/contacts/${contact.id}.vcf`;
+          const etag = generateETag(contact);
+          const vcard = generateVCard(contact);
+
+          return `
+  <response>
+    <href>${escapeXml(href)}</href>
+    <propstat>
+      <prop>
+        <getetag>${escapeXml(etag)}</getetag>
+        <C:address-data>${escapeXml(vcard)}</C:address-data>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>`;
+        }).join("");
+
+        // Build response entries for deleted contacts (RFC 6578 format)
+        const deletedEntries = deletedContactIds.map((contactId) => {
+          const href = `/api/addressbooks/users/${userId}/contacts/${contactId}.vcf`;
+          return `
+  <response>
+    <href>${escapeXml(href)}</href>
+    <status>HTTP/1.1 404 Not Found</status>
+  </response>`;
+        }).join("");
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav">
+${currentEntries}${deletedEntries}
+  <sync-token>${escapeXml(newSyncToken)}</sync-token>
+</multistatus>`.trim();
+
+        console.log(`[CONTACTS] XML response length: ${xml.length} bytes`);
+        res.status(207);
+        res.setHeader("Content-Type", "application/xml; charset=utf-8");
+        res.setHeader("DAV", "1, 2, 3, addressbook");
+        res.send(xml);
+        return;
+      }
+
+      // Regular addressbook-query REPORT
+      console.log(`[CONTACTS] Regular REPORT returning ${friendContacts.length} contacts`);
       friendContacts.forEach(c => {
         const name = `${c.firstName} ${c.lastName}`.trim();
         console.log(`[CONTACTS]   - ${name} (${c.id})`);
