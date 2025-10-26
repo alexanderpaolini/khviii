@@ -27,10 +27,12 @@ export const friendRouter = createTRPCRouter({
   }),
 
   sendFriendRequest: protectedProcedure
-    .input(z.object({ 
-      friendCode: z.string(),
-      message: z.string().optional()
-    }))
+    .input(
+      z.object({
+        friendCode: z.string(),
+        message: z.string().optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
       const friendCode = input.friendCode.trim();
@@ -74,8 +76,16 @@ export const friendRouter = createTRPCRouter({
       const existingRequest = await ctx.db.friendRequest.findFirst({
         where: {
           OR: [
-            { requesterId: userId, receiverId: otherUser.id, status: "PENDING" },
-            { requesterId: otherUser.id, receiverId: userId, status: "PENDING" },
+            {
+              requesterId: userId,
+              receiverId: otherUser.id,
+              status: "PENDING",
+            },
+            {
+              requesterId: otherUser.id,
+              receiverId: userId,
+              status: "PENDING",
+            },
           ],
         },
       });
@@ -196,7 +206,7 @@ export const friendRouter = createTRPCRouter({
   // Friend request functionality
   getPendingRequests: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
-    
+
     const requests = await ctx.db.friendRequest.findMany({
       where: {
         receiverId: userId,
@@ -219,7 +229,7 @@ export const friendRouter = createTRPCRouter({
 
   getSentRequests: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
-    
+
     const requests = await ctx.db.friendRequest.findMany({
       where: {
         requesterId: userId,
@@ -258,15 +268,49 @@ export const friendRouter = createTRPCRouter({
                 {
                   contact: {
                     OR: [
-                      { firstName: { contains: searchQuery, mode: "insensitive" } },
-                      { lastName: { contains: searchQuery, mode: "insensitive" } },
-                      { nickname: { contains: searchQuery, mode: "insensitive" } },
-                      { phoneNumber: { contains: searchQuery, mode: "insensitive" } },
+                      {
+                        firstName: {
+                          contains: searchQuery,
+                          mode: "insensitive",
+                        },
+                      },
+                      {
+                        lastName: {
+                          contains: searchQuery,
+                          mode: "insensitive",
+                        },
+                      },
+                      {
+                        nickname: {
+                          contains: searchQuery,
+                          mode: "insensitive",
+                        },
+                      },
+                      {
+                        phoneNumber: {
+                          contains: searchQuery,
+                          mode: "insensitive",
+                        },
+                      },
                       { email: { contains: searchQuery, mode: "insensitive" } },
-                      { instagram: { contains: searchQuery, mode: "insensitive" } },
-                      { discord: { contains: searchQuery, mode: "insensitive" } },
-                      { linkedin: { contains: searchQuery, mode: "insensitive" } },
-                      { company: { contains: searchQuery, mode: "insensitive" } },
+                      {
+                        instagram: {
+                          contains: searchQuery,
+                          mode: "insensitive",
+                        },
+                      },
+                      {
+                        discord: { contains: searchQuery, mode: "insensitive" },
+                      },
+                      {
+                        linkedin: {
+                          contains: searchQuery,
+                          mode: "insensitive",
+                        },
+                      },
+                      {
+                        company: { contains: searchQuery, mode: "insensitive" },
+                      },
                     ],
                   },
                 },
@@ -291,7 +335,7 @@ export const friendRouter = createTRPCRouter({
       z.object({
         requestId: z.string(),
         status: z.enum(["ACCEPTED", "REJECTED"]),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
@@ -313,12 +357,8 @@ export const friendRouter = createTRPCRouter({
       }
 
       // Update the request status
-      const updatedRequest = await ctx.db.friendRequest.update({
+      const updatedRequest = await ctx.db.friendRequest.delete({
         where: { id: input.requestId },
-        data: {
-          status: input.status,
-          respondedAt: new Date(),
-        },
       });
 
       // If accepted, create the friend relationship
@@ -332,5 +372,5 @@ export const friendRouter = createTRPCRouter({
       }
 
       return updatedRequest;
-  }),
+    }),
 });
