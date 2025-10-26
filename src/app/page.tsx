@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-
 import { auth } from "~/server/auth";
 import { HydrateClient } from "~/trpc/server";
+import LoginButton from "~/app/_components/LoginButton";
 
 export default async function Home() {
   const session = await auth();
@@ -17,14 +16,7 @@ export default async function Home() {
             CardDav
           </h1>
           <div className="flex flex-col items-center gap-2">
-            <div className="flex flex-col items-center justify-center gap-4">
-              <Link
-                href={"/api/auth/signin"}
-                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-              >
-                Sign in
-              </Link>
-            </div>
+            <LoginButton />
           </div>
         </div>
       </main>
