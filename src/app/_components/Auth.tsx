@@ -19,7 +19,7 @@ export function SignOutButton() {
       <div className="flex flex-col items-center justify-center gap-4">
         <button
           onClick={() => setConfirming(true)}
-          className="rounded-full bg-purple-500 px-10 py-3 font-semibold text-white transition hover:bg-pink-500"
+          className="rounded-full bg-purple-500 px-10 py-3 font-semibold text-white transition hover:bg-purple-600"
         >
           Sign Out
         </button>
