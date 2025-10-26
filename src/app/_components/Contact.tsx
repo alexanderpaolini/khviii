@@ -17,10 +17,10 @@ export function ContactInput() {
 
   // keep original values to detect changes (dirty state)
   const [original, setOriginal] = useState({
-    nickname: "",
-    firstName: "",
-    lastName: "",
-    email: "",
+    nickname: data?.nickname,
+    firstName: data?.firstName,
+    lastName: data?.lastName,
+    email: data?.email,
   });
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export function ContactInput() {
             onClick={() => handleSave()}
             className={`transition-all duration-150 ${
               isDirty
-                ? "ring-2 ring-offset-2 ring-blue-400 shadow-md"
+                ? "shadow-md ring-2 ring-blue-400 ring-offset-2"
                 : "opacity-90"
             }`}
           >

@@ -62,17 +62,24 @@ export const authConfig = {
   adapter: PrismaAdapter(db),
   callbacks: {
     session: async ({ session, user }) => {
-      const contact = await db.contact.findFirst({ where: { 
-        userId: user.id
-      }});
+      const contact = await db.contact.findFirst({
+        where: {
+          userId: user.id,
+        },
+      });
 
       if (contact == null) {
+        const names = user.name?.trim().split(/\s+/);
+        const firstName = names?.[0] ?? "First Name";
+        const lastName = names?.slice(1, names.length).join("");
+
         await db.contact.create({
           data: {
             userId: user.id,
-            firstName: user.name ?? "First Name",
-          }
-        })
+            firstName,
+            lastName: lastName ?? null,
+          },
+        });
       }
 
       return {
