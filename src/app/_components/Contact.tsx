@@ -61,19 +61,40 @@ export function ContactInput() {
     lastName !== original.lastName ||
     email !== original.email;
 
+  const isFirstNameValid = firstName.trim().length > 0;
+  const canSave = isFirstNameValid;
+
   const handleSave = () => {
-    toast.promise(
-      updateContact.mutateAsync({ nickname, firstName, lastName, email }),
-      {
-        success: async () => {
-          await utils.contact.get.refetch();
-          // update original to current values so the form is no longer "dirty"
-          setOriginal({ nickname, firstName, lastName, email });
-          return "Contact updated successfully";
-        },
-        loading: "Saving...",
-        error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
+    if (!canSave) {
+      toast.error("First name is required");
+      return;
+    }
+
+    console.log("Contact updated successfully");
+    updateContact.mutate(
+      { 
+        nickname, 
+        firstName, 
+        lastName, 
+        email,
+        phoneNumber,
+        instagram,
+        discord,
+        linkedin,
+        pronouns,
+        company,
+        address,
+        birthday: birthday ? new Date(birthday) : undefined
       },
+      {
+        onSuccess: async () => {
+          await utils.contact.get.refetch();
+          setOriginal({ nickname, firstName, lastName, email });
+        },
+        onError: (error) => {
+          console.error("Error updating contact:", error.message);
+        },
+      }
     );
   };
 
@@ -103,10 +124,12 @@ export function ContactInput() {
             <InputGroup>
               <Input
                 name="firstName"
-                placeholder="First name"
+                placeholder="First name (required)"
                 aria-label="First name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                className={!isFirstNameValid && firstName.length > 0 ? "border-red-500" : ""}
+                required
               />
             </InputGroup>
             <InputGroup>
@@ -226,30 +249,20 @@ export function ContactInput() {
           </InputGroup>
         </div>
 
-        <InputGroup>
-          <Input
-            name="email"
-            type="email"
-            placeholder="Email"
-            aria-label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </InputGroup>
-
         <div className="mt-2 flex items-center justify-between gap-2">
           <Button
             type="submit"
             onClick={() => handleSave()}
+            disabled={!canSave}
             className={`transition-all duration-150 ${
-              isDirty
+              canSave && isDirty
                 ? "shadow-md ring-2 ring-blue-400 ring-offset-2"
                 : "opacity-90"
             }`}
           >
             Save
           </Button>
-          <Label className="text-xs text-gray-400">All fields are optional</Label>
+          <Label className="text-xs text-gray-400">First name is required *</Label>
         </div>
       </div>
     </div>

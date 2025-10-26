@@ -40,9 +40,9 @@ export default async function Home() {
             </div>
 
             {/* Business Card Section */}
-            <div className="w-full max-w-4xl">
+            {/*<div className="w-full max-w-4xl">
               <BusinessCard />
-            </div>
+            </div>*/}
           </div>
 
           <Separator className="mb-4 max-w-[80%]" />
