@@ -91,7 +91,7 @@ export function FriendRequestSidebar({
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="bg-opacity-50 fixed inset-0 z-40 bg-black transition-opacity duration-300"
+          className="fixed inset-0 z-40 bg-black/20 transition-opacity duration-300"
           onClick={onClose}
         />
       )}
