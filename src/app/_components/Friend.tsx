@@ -108,8 +108,9 @@ export function FriendsList() {
 }
 export function FriendDialogue() {
   const [friendCode, setFriendCode] = useState<undefined | string>(undefined);
+  const [message, setMessage] = useState<undefined | string>(undefined);
   const utils = api.useUtils();
-  const route = api.friend.add.useMutation();
+  const route = api.friend.sendFriendRequest.useMutation();
   const [open, setOpen] = useState(false);
 
   function handleSubmit() {
@@ -119,15 +120,20 @@ export function FriendDialogue() {
     }
 
     route.mutate(
-      { friendCode },
+      { 
+        friendCode,
+        message: message?.trim() || undefined
+      },
       {
         onSuccess: async (d) => {
-          console.log(`Friended ${d.userB.contact!.firstName}`);
-          await utils.friend.getAll.refetch();
+          console.log(`Friend request sent to ${d.receiver.contact?.firstName || d.receiver.name}`);
+          await utils.friend.getPendingRequests.refetch();
           setOpen(false);
+          setFriendCode(undefined);
+          setMessage(undefined);
         },
         onError: (error) => {
-          console.error("Failed to add friend:", error.message);
+          console.error("Failed to send friend request:", error.message);
         },
       }
     );
@@ -136,13 +142,13 @@ export function FriendDialogue() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Add Friend</Button>
+        <Button>Send Friend Request</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Friend</DialogTitle>
+          <DialogTitle>Send Friend Request</DialogTitle>
           <DialogDescription>
-            Add a friend by entering their friend code below.
+            Send a friend request by entering their friend code below. You can optionally include a message.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
@@ -153,16 +159,28 @@ export function FriendDialogue() {
               name="friendCode"
               placeholder="alpha-beta-omega"
               aria-label="Friend Code"
+              value={friendCode || ""}
               onChange={(e) => setFriendCode(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-3">
+            <Label htmlFor="message">Message (Optional)</Label>
+            <Input
+              id="message"
+              name="message"
+              placeholder="Hey! Let's be friends!"
+              aria-label="Friend Request Message"
+              value={message || ""}
+              onChange={(e) => setMessage(e.target.value)}
             />
           </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button>Cancel</Button>
+            <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button type="submit" onClick={() => handleSubmit()}>
-            Submit
+          <Button type="submit" onClick={() => handleSubmit()} disabled={route.isPending}>
+            {route.isPending ? "Sending..." : "Send Request"}
           </Button>
         </DialogFooter>
       </DialogContent>

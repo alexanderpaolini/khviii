@@ -26,6 +26,95 @@ export const friendRouter = createTRPCRouter({
     });
   }),
 
+  sendFriendRequest: protectedProcedure
+    .input(z.object({ 
+      friendCode: z.string(),
+      message: z.string().optional()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const friendCode = input.friendCode.trim();
+
+      const otherUser = await ctx.db.user.findFirst({
+        where: { friendCode },
+      });
+
+      if (!otherUser) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User with that friend code not found",
+        });
+      }
+
+      if (otherUser.id === userId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot send friend request to yourself",
+        });
+      }
+
+      // Check if already friends
+      const existingFriend = await ctx.db.friend.findFirst({
+        where: {
+          OR: [
+            { userAId: userId, userBId: otherUser.id },
+            { userAId: otherUser.id, userBId: userId },
+          ],
+        },
+      });
+
+      if (existingFriend) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "You are already friends with this user",
+        });
+      }
+
+      // Check if there's already a pending request
+      const existingRequest = await ctx.db.friendRequest.findFirst({
+        where: {
+          OR: [
+            { requesterId: userId, receiverId: otherUser.id, status: "PENDING" },
+            { requesterId: otherUser.id, receiverId: userId, status: "PENDING" },
+          ],
+        },
+      });
+
+      if (existingRequest) {
+        if (existingRequest.requesterId === userId) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "You have already sent a friend request to this user",
+          });
+        } else {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "This user has already sent you a friend request",
+          });
+        }
+      }
+
+      // Create the friend request
+      const friendRequest = await ctx.db.friendRequest.create({
+        data: {
+          requesterId: userId,
+          receiverId: otherUser.id,
+          message: input.message,
+          status: "PENDING",
+        },
+        include: {
+          receiver: {
+            include: {
+              contact: true,
+            },
+          },
+        },
+      });
+
+      return friendRequest;
+    }),
+
+  // Keep the old add method for backward compatibility (direct friend creation)
   add: protectedProcedure
     .input(z.object({ friendCode: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -115,6 +204,29 @@ export const friendRouter = createTRPCRouter({
       },
       include: {
         requester: {
+          include: {
+            contact: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return requests;
+  }),
+
+  getSentRequests: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    
+    const requests = await ctx.db.friendRequest.findMany({
+      where: {
+        requesterId: userId,
+        status: "PENDING",
+      },
+      include: {
+        receiver: {
           include: {
             contact: true,
           },
