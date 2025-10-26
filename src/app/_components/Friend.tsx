@@ -96,44 +96,39 @@ export function FriendsList() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="rounded-xl bg-white/5 p-8 shadow-lg backdrop-blur-sm border border-white/10 h-full">
+      <div className="h-full rounded-xl border border-white/10 bg-white/5 p-8 shadow-lg backdrop-blur-sm">
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            
+          <div className="mb-2 flex items-center gap-3">
             <h2 className="text-lg font-bold text-black">Friends</h2>
           </div>
-          <p className="text-gray-300 text-sm leading-relaxed">
-            Manage your friends and send new friend requests.
-          </p>
         </div>
 
-        <div className="flex flex-col h-[calc(100%-6rem)]">
-          {/* Friends List - Scrollable */}
-          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 pr-2">
+        <div className="flex h-[calc(100%-6rem)] flex-col">
+          <div className="scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 flex-1 overflow-y-auto pr-2">
             <div className="flex flex-col gap-3">
               {friends.length > 0 ? (
-                friends.map((f) => (
-                  <Friend key={f.id} friend={f} />
-                ))
+                friends.map((f) => <Friend key={f.id} friend={f} />)
               ) : (
-                <div className="text-center py-8 text-gray-400">
+                <div className="py-8 text-center text-gray-400">
                   <p className="text-sm">No friends yet</p>
-                  <p className="text-xs mt-1">Send friend requests to get started!</p>
+                  <p className="mt-1 text-xs">
+                    Send friend requests to get started!
+                  </p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Add Friend Button */}
-          <div className="pt-4 border-t border-white/10 mt-4">
-          <div className="mt-2 flex items-center justify-between px-2">
-            <span className="text-sm font-medium">
-              Friend Code:
-              <span className="ml-2 font-mono text-sm">
-                {fc?.friendCode ?? "Loading..."}
+          <div className="border-t border-white/10 pt-4">
+            <div className="mt-2 flex items-center justify-between px-2">
+              <span className="text-sm font-medium">
+                Friend Code:
+                <span className="ml-2 font-mono text-sm">
+                  {fc?.friendCode ?? "Loading..."}
+                </span>
               </span>
-            </span>
-            <FriendDialogue />
+              <FriendDialogue />
+            </div>
           </div>
         </div>
       </div>

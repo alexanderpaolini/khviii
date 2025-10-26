@@ -47,7 +47,7 @@ export default async function Home() {
 
           <Separator className="mb-4 max-w-[80%]" />
 
-          <div className="flex h-5 items-center text-sm">
+          <div className="flex h-5 items-center text-sm mb-8">
             <HowToDialogue />
             <Separator orientation="vertical" />
             <SignOutButton />

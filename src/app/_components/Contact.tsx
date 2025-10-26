@@ -17,12 +17,12 @@ export function ContactInput() {
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
-  
+
   // Social media
   const [instagram, setInstagram] = useState("");
   const [discord, setDiscord] = useState("");
   const [linkedin, setLinkedin] = useState("");
-  
+
   // Additional info
   const [pronouns, setPronouns] = useState("");
   const [company, setCompany] = useState("");
@@ -70,12 +70,11 @@ export function ContactInput() {
       return;
     }
 
-    console.log("Contact updated successfully");
-    updateContact.mutate(
-      { 
-        nickname, 
-        firstName, 
-        lastName, 
+    toast.promise(
+      updateContact.mutateAsync({
+        nickname,
+        firstName,
+        lastName,
         email,
         phoneNumber,
         instagram,
@@ -84,17 +83,16 @@ export function ContactInput() {
         pronouns,
         company,
         address,
-        birthday: birthday ? new Date(birthday) : undefined
-      },
+        birthday: birthday ? new Date(birthday) : undefined,
+      }),
       {
-        onSuccess: async () => {
+        success: async (d) => {
           await utils.contact.get.refetch();
-          setOriginal({ nickname, firstName, lastName, email });
+          return `Contact updated for ${(d as any)?.firstName ?? firstName}`;
         },
-        onError: (error) => {
-          console.error("Error updating contact:", error.message);
-        },
-      }
+        loading: "Saving...",
+        error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
+      },
     );
   };
 
@@ -108,8 +106,10 @@ export function ContactInput() {
       <div className="flex flex-col gap-4">
         {/* Basic Information */}
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-300">Basic Information</h3>
-          
+          <h3 className="text-sm font-medium text-gray-300">
+            Basic Information
+          </h3>
+
           <InputGroup>
             <Input
               name="nickname"
@@ -128,7 +128,11 @@ export function ContactInput() {
                 aria-label="First name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className={!isFirstNameValid && firstName.length > 0 ? "border-red-500" : ""}
+                className={
+                  !isFirstNameValid && firstName.length > 0
+                    ? "border-red-500"
+                    : ""
+                }
                 required
               />
             </InputGroup>
@@ -170,7 +174,7 @@ export function ContactInput() {
         {/* Social Media */}
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-gray-300">Social Media</h3>
-          
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <InputGroup>
               <Input
@@ -204,8 +208,10 @@ export function ContactInput() {
 
         {/* Additional Information */}
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-300">Additional Information</h3>
-          
+          <h3 className="text-sm font-medium text-gray-300">
+            Additional Information
+          </h3>
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <InputGroup>
               <Input
@@ -262,7 +268,9 @@ export function ContactInput() {
           >
             Save
           </Button>
-          <Label className="text-xs text-gray-400">First name is required *</Label>
+          <Label className="text-xs text-gray-400">
+            First name is required *
+          </Label>
         </div>
       </div>
     </div>
