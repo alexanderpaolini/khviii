@@ -4,7 +4,6 @@ import type { Contact, Friend } from "@prisma/client";
 import { useState, type FormEvent } from "react";
 import { Label } from "@radix-ui/react-label";
 import { Cross, X } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   DialogFooter,
@@ -31,14 +30,18 @@ function Friend({ friend }: { friend: Contact }) {
   const route = api.friend.remove.useMutation();
 
   const handleRemove = () => {
-    toast.promise(route.mutateAsync({ id: friend.userId }), {
-      success: async () => {
-        await utils.friend.getAll.refetch();
-        return `Removed ${friend.firstName}`;
-      },
-      loading: "Removing...",
-      error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
-    });
+    route.mutate(
+      { id: friend.userId },
+      {
+        onSuccess: async () => {
+          console.log(`Removed ${friend.firstName}`);
+          await utils.friend.getAll.refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to remove friend:", error.message);
+        },
+      }
+    );
   };
 
   return (
@@ -111,19 +114,23 @@ export function FriendDialogue() {
 
   function handleSubmit() {
     if (!friendCode) {
-      toast.error("Missing friend code");
+      console.error("Missing friend code");
       return;
     }
 
-    toast.promise(route.mutateAsync({ friendCode }), {
-      success: async (d) => {
-        await utils.friend.getAll.refetch();
-        setOpen(false);
-        return `Friended ${d.userB.contact!.firstName}`;
-      },
-      loading: "Loading...",
-      error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
-    });
+    route.mutate(
+      { friendCode },
+      {
+        onSuccess: async (d) => {
+          console.log(`Friended ${d.userB.contact!.firstName}`);
+          await utils.friend.getAll.refetch();
+          setOpen(false);
+        },
+        onError: (error) => {
+          console.error("Failed to add friend:", error.message);
+        },
+      }
+    );
   }
 
   return (

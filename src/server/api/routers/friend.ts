@@ -103,4 +103,76 @@ export const friendRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  // Friend request functionality
+  getPendingRequests: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    
+    const requests = await ctx.db.friendRequest.findMany({
+      where: {
+        receiverId: userId,
+        status: "PENDING",
+      },
+      include: {
+        requester: {
+          include: {
+            contact: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return requests;
+  }),
+
+  respondToRequest: protectedProcedure
+    .input(
+      z.object({
+        requestId: z.string(),
+        status: z.enum(["ACCEPTED", "REJECTED"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      // Get the friend request
+      const request = await ctx.db.friendRequest.findFirst({
+        where: {
+          id: input.requestId,
+          receiverId: userId,
+          status: "PENDING",
+        },
+      });
+
+      if (!request) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Friend request not found",
+        });
+      }
+
+      // Update the request status
+      const updatedRequest = await ctx.db.friendRequest.update({
+        where: { id: input.requestId },
+        data: {
+          status: input.status,
+          respondedAt: new Date(),
+        },
+      });
+
+      // If accepted, create the friend relationship
+      if (input.status === "ACCEPTED") {
+        await ctx.db.friend.create({
+          data: {
+            userAId: request.requesterId,
+            userBId: request.receiverId,
+          },
+        });
+      }
+
+      return updatedRequest;
+    }),
 });

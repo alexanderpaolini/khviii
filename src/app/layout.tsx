@@ -2,7 +2,6 @@ import "~/styles/globals.css";
 
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
-import { Toaster } from 'sonner'
 
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -23,7 +22,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`}>
       <body className="bg-linear-to-b from-[#ad8bdd] to-[#757ad7]">
-        <Toaster position="top-right" closeButton/>
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>
