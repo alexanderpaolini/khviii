@@ -240,6 +240,52 @@ export const friendRouter = createTRPCRouter({
     return requests;
   }),
 
+  searchUsers: protectedProcedure
+    .input(z.object({ query: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const searchQuery = input.query.trim();
+
+      // Search by email, name, phone number, or nickname
+      const users = await ctx.db.user.findMany({
+        where: {
+          AND: [
+            { id: { not: userId } }, // Exclude current user
+            {
+              OR: [
+                { email: { contains: searchQuery, mode: "insensitive" } },
+                { name: { contains: searchQuery, mode: "insensitive" } },
+                {
+                  contact: {
+                    OR: [
+                      { firstName: { contains: searchQuery, mode: "insensitive" } },
+                      { lastName: { contains: searchQuery, mode: "insensitive" } },
+                      { nickname: { contains: searchQuery, mode: "insensitive" } },
+                      { phoneNumber: { contains: searchQuery, mode: "insensitive" } },
+                      { email: { contains: searchQuery, mode: "insensitive" } },
+                      { instagram: { contains: searchQuery, mode: "insensitive" } },
+                      { discord: { contains: searchQuery, mode: "insensitive" } },
+                      { linkedin: { contains: searchQuery, mode: "insensitive" } },
+                      { company: { contains: searchQuery, mode: "insensitive" } },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        include: {
+          contact: true,
+        },
+        take: 10, // Limit results for performance
+        orderBy: {
+          name: "asc",
+        },
+      });
+
+      return users;
+    }),
+
   respondToRequest: protectedProcedure
     .input(
       z.object({
@@ -286,5 +332,5 @@ export const friendRouter = createTRPCRouter({
       }
 
       return updatedRequest;
-    }),
+  }),
 });
