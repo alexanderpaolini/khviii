@@ -1,83 +1,11 @@
 import { db } from "~/server/db";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { validateBasicAuth, sendUnauthorized } from "~/lib/basicAuth";
-import crypto from "crypto";
-
-interface ContactData {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  nickname: string | null;
-  phoneNumber: string | null;
-  email: string | null;
-  instagram: string | null;
-  discord: string | null;
-  linkedin: string | null;
-  pronouns: string | null;
-  company: string | null;
-  address: string | null;
-  birthday: Date | null;
-}
-
-function generateETag(contact: ContactData): string {
-  // Create a stable hash based on all contact fields
-  const contactData = JSON.stringify({
-    id: contact.id,
-    firstName: contact.firstName,
-    lastName: contact.lastName,
-    nickname: contact.nickname,
-    phoneNumber: contact.phoneNumber,
-    email: contact.email,
-    instagram: contact.instagram,
-    discord: contact.discord,
-    linkedin: contact.linkedin,
-    pronouns: contact.pronouns,
-    company: contact.company,
-    address: contact.address,
-    birthday: contact.birthday?.toISOString(),
-  });
-
-  const hash = crypto.createHash("md5").update(contactData).digest("hex");
-  return `"${contact.id}-${hash.substring(0, 8)}"`;
-}
-
-function generateVCard(contact: ContactData): string {
-  const firstName = contact.firstName ?? "";
-  const lastName = contact.lastName ?? "";
-  const fullName = `${firstName} ${lastName}`.trim() || "Unknown";
-
-  let vcard = `BEGIN:VCARD\nVERSION:4.0\nUID:${contact.id}\nFN:${fullName}\nN:${lastName};${firstName};;;`;
-  let iloveapple = 1; // because of apple's weird social media inclusions for vcards since this is a dead format
-
-  if (contact.email) vcard += `\nEMAIL;TYPE=INTERNET:${contact.email}`;
-  if (contact.phoneNumber) vcard += `\nTEL;TYPE=CELL:${contact.phoneNumber}`;
-  if (contact.nickname) vcard += `\nNICKNAME:${contact.nickname}`;
-  if (contact.instagram) {
-    vcard += `\nitem${iloveapple}.X-SOCIALPROFILE;X-USER=${contact.instagram}:https://instagram.com/${contact.instagram}`
-    vcard += `\nitem${iloveapple}.X-ABLABEL:Instagram`
-    iloveapple++;
-  }
-  if (contact.discord) {
-    vcard += `\nitem${iloveapple}.X-SOCIALPROFILE;X-USER=${contact.discord}:https://discord.com`
-    vcard += `\nitem${iloveapple}.X-ABLABEL:Discord`
-    iloveapple++;
-  }
-  if (contact.linkedin) vcard += `\nX-SOCIALPROFILE;X-USER=${contact.linkedin};TYPE=linkedin:https://linkedin.com/in/${contact.linkedin}`;
-  if (contact.company) vcard += `\nORG:${contact.company}`;
-  if (contact.address) vcard += `\nADR;TYPE=HOME:;;${contact.address};;;;`;
-  if (contact.birthday) {
-    const year = contact.birthday.getFullYear();
-    const month = String(contact.birthday.getMonth() + 1).padStart(2, "0");
-    const day = String(contact.birthday.getDate()).padStart(2, "0");
-    vcard += `\nBDAY:${year}-${month}-${day}`;
-  }
-  if (contact.pronouns) vcard += contact.pronouns ? `\nX-PRONOUNS:${contact.pronouns}` : ``;
-
-  vcard += `\nREV:2024-01-01T00:00:00Z`;
-  vcard += `\nEND:VCARD`;
-
-  return vcard;
-}
+import {
+  type ContactData,
+  generateETag,
+  generateVCard,
+} from "~/lib/addressbook";
 
 export default async function handler(
   req: NextApiRequest,

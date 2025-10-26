@@ -1,17 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { validateBasicAuth, sendUnauthorized } from "~/lib/basicAuth";
-
-function escapeXml(input?: string) {
-  if (!input) return "";
-  const map: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&apos;",
-  };
-  return input.replace(/[&<>"']/g, (ch) => map[ch] ?? ch);
-}
+import { escapeXml } from "~/lib/addressbook";
 
 export default async function handler(
   req: NextApiRequest,
