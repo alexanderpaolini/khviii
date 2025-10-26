@@ -6,11 +6,6 @@ export interface AuthResult {
   userId?: string;
 }
 
-/**
- * Simple basic auth validator
- * Looks up user by ID (username should be the user ID like "user-bob")
- * For MVP: accepts any password
- */
 export async function validateBasicAuth(
   req: NextApiRequest,
 ): Promise<AuthResult> {
@@ -21,7 +16,6 @@ export async function validateBasicAuth(
   }
 
   try {
-    // Decode Basic auth header
     const base64Credentials = authHeader.substring(6);
     const credentials = Buffer.from(base64Credentials, "base64").toString(
       "utf-8",
@@ -32,7 +26,6 @@ export async function validateBasicAuth(
       return { authenticated: false };
     }
 
-    // Look up user by ID (username = user ID like "user-bob")
     const user = await db.user.findUnique({
       where: { id: username },
       select: { id: true },
@@ -42,7 +35,6 @@ export async function validateBasicAuth(
       return { authenticated: false };
     }
 
-    // For MVP: accept any password, return actual user ID
     return {
       authenticated: true,
       userId: user.id,
@@ -53,9 +45,7 @@ export async function validateBasicAuth(
   }
 }
 
-/**
- * Sends 401 Unauthorized response
- */
+// used rarely, we really aren't caring about auth that much
 export function sendUnauthorized(res: NextApiResponse): void {
   res.status(401);
   res.setHeader("WWW-Authenticate", 'Basic realm="CardDAV Server"');
