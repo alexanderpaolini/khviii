@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { api } from "~/trpc/react";
-import { X, User, Check } from "lucide-react";
+import { X, User, Check, Search, Plus } from "lucide-react";
 
 interface FriendRequestSidebarProps {
   isOpen: boolean;
@@ -138,13 +138,7 @@ export function FriendRequestSidebar({
                         <p className="mt-2 rounded border bg-white p-2 text-sm text-gray-600">
                           &quot;{request.message}&quot;
                         </p>
-                        <p className="text-sm text-gray-500">
-                          {user.contact?.nickname || user.name}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {user.email || user.contact?.email}
-                        </p>
-                      </div>
+                      )}
                     </div>
                   </div>
 
@@ -169,14 +163,8 @@ export function FriendRequestSidebar({
                       Reject
                     </Button>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">No users found</p>
-                  <p className="text-sm mt-2">Try searching by name, email, or phone number.</p>
                 </div>
-              )}
+              ))}
             </div>
           ) : (
             <div className="py-12 text-center text-gray-500">
