@@ -49,8 +49,17 @@ function Friend({ friend }: { friend: Contact }) {
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-medium">
-            {friend.firstName} {friend.lastName}{" "}
-            {friend.nickname ? `(${friend.nickname})` : ""}
+            {friend.nickname ? (
+              <>
+                {friend.nickname} ({friend.firstName}
+                {friend.lastName ? ` ${friend.lastName}` : ""})
+              </>
+            ) : (
+              <>
+                {friend.firstName}
+                {friend.lastName ? ` ${friend.lastName}` : ""}
+              </>
+            )}
           </span>
           <span className="text-xs font-light">{friend.email}</span>
         </div>
@@ -103,6 +112,7 @@ export function FriendsList() {
     </div>
   );
 }
+
 export function FriendDialogue() {
   const [friendCode, setFriendCode] = useState<undefined | string>(undefined);
   const [message, setMessage] = useState<undefined | string>(undefined);

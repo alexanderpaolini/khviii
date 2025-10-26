@@ -32,12 +32,7 @@ export function SignOutButton() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded-full bg-purple-500 px-10 py-3 font-semibold text-white transition hover:bg-purple-600"
-        >
-          Sign Out
-        </button>
+        <Button variant="link">Sign Out</Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -64,9 +59,7 @@ export function LoginButton() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <button className="rounded-full bg-white/10 px-10 py-3 font-semibold transition hover:bg-white/20">
-          Sign in
-        </button>
+        <Button variant="outline">Sign in</Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">

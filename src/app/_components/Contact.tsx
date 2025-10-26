@@ -7,6 +7,7 @@ import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
 export function ContactInput() {
   const { data } = api.contact.get.useQuery();
 
