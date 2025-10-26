@@ -80,7 +80,7 @@ export function BusinessCard() {
   };
 
   return (
-    <div className="rounded-xl bg-white/5 p-8 shadow-lg backdrop-blur-sm border border-white/10">
+    <div className="rounded-xl p-8 shadow-lg backdrop-blur-sm border border-white/10" style={{ backgroundColor: '#fffffc' }}>
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           

@@ -155,7 +155,7 @@ export function ContactInput() {
   }
 
   return (
-    <div className="rounded-xl bg-white/5 p-6 shadow-md backdrop-blur-sm">
+    <div className="rounded-xl p-6 shadow-md backdrop-blur-sm" style={{ backgroundColor: '#fffffc' }}>
       <h2 className="mb-2 text-lg font-semibold">Your Contact</h2>
       <p className="mb-4 text-sm font-light">
         Fill out your contact information to share with friends.

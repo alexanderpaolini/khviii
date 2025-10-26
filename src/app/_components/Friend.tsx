@@ -96,7 +96,7 @@ export function FriendsList() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="h-full rounded-xl border border-white/10 bg-white/5 p-8 shadow-lg backdrop-blur-sm">
+      <div className="h-full rounded-xl border border-white/10 p-8 shadow-lg backdrop-blur-sm" style={{ backgroundColor: '#fffffc' }}>
         <div className="mb-6">
           <div className="mb-2 flex items-center gap-3">
             <h2 className="text-lg font-bold text-black">Friends</h2>

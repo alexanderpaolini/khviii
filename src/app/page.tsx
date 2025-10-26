@@ -53,7 +53,7 @@ export default async function Home() {
                 </div>
 
                 <div className="absolute top-0 left-0 h-full w-full overflow-hidden rounded-xl">
-                  <div className="pointer-events-none absolute -top-10 -left-24 h-48 w-96 -rotate-6 bg-white/6 opacity-30 blur-xl" />
+                  <div className="pointer-events-none absolute -top-10 -left-24 h-48 w-96 -rotate-6 bg-[#f0ead6]/6 opacity-30 blur-xl" />
                 </div>
               </div>
             </div>
@@ -62,8 +62,8 @@ export default async function Home() {
           {/* FEATURES */}
           <section id="features" className="mt-16">
             <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
-              <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-center">
-                <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-white/8" />
+              <div className="rounded-lg border border-white/10 bg-[#f0ead6]/5 p-6 text-center">
+                <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-[#f0ead6]/8" />
                 <h3 className="mb-2 text-lg font-semibold">Sync Contacts</h3>
                 <p className="text-sm text-gray-500">
                   Use any CardDAV client to sync your contact across devices —
@@ -71,8 +71,8 @@ export default async function Home() {
                 </p>
               </div>
 
-              <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-center">
-                <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-white/8" />
+              <div className="rounded-lg border border-white/10 bg-[#f0ead6]/5 p-6 text-center">
+                <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-[#f0ead6]/8" />
                 <h3 className="mb-2 text-lg font-semibold">Share Safely</h3>
                 <p className="text-sm text-gray-500">
                   Exchange friend codes, send friend requests, and control who
@@ -80,8 +80,8 @@ export default async function Home() {
                 </p>
               </div>
 
-              <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-center">
-                <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-white/8" />
+              <div className="rounded-lg border border-white/10 bg-[#f0ead6]/5 p-6 text-center">
+                <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-[#f0ead6]/8" />
                 <h3 className="mb-2 text-lg font-semibold">OAuth & Privacy</h3>
                 <p className="text-sm text-gray-500">
                   Sign in with Google, GitHub, or Discord. Authentication and
@@ -111,7 +111,7 @@ export default async function Home() {
 
             <div className="mt-16 grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
               <div className="relative flex items-center justify-center sm:justify-end">
-                <div className="group relative h-56 w-full max-w-xs -translate-y-2 -rotate-2 transform overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-2xl transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:rotate-0 sm:h-72 sm:max-w-sm sm:-translate-y-4">
+                <div className="group relative h-56 w-full max-w-xs -translate-y-2 -rotate-2 transform overflow-hidden rounded-xl border border-white/10 bg-[#f0ead6]/5 shadow-2xl transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:scale-[1.02] hover:rotate-0 sm:h-72 sm:max-w-sm sm:-translate-y-4">
                   <Image
                     src="/ss3.png"
                     alt="CardDAV setup screenshot"
@@ -119,12 +119,12 @@ export default async function Home() {
                     className="object-cover"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent mix-blend-overlay" />
-                  <div className="pointer-events-none absolute -right-12 -bottom-8 h-32 w-48 rounded-full bg-white/3 opacity-30 blur-3xl" />
+                  <div className="pointer-events-none absolute -right-12 -bottom-8 h-32 w-48 rounded-full bg-[#f0ead6]/3 opacity-30 blur-3xl" />
                 </div>
               </div>
 
               <div className="relative flex items-center justify-center sm:justify-start">
-                <div className="group relative h-56 w-full max-w-xs translate-y-2 rotate-2 transform overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-2xl transition-transform duration-300 ease-in-out hover:translate-y-1 hover:scale-[1.02] hover:rotate-0 sm:h-72 sm:max-w-sm sm:translate-y-4">
+                <div className="group relative h-56 w-full max-w-xs translate-y-2 rotate-2 transform overflow-hidden rounded-xl border border-white/10 bg-[#f0ead6]/5 shadow-2xl transition-transform duration-300 ease-in-out hover:translate-y-1 hover:scale-[1.02] hover:rotate-0 sm:h-72 sm:max-w-sm sm:translate-y-4">
                   <Image
                     src="/ss4.png"
                     alt="Sharing UI screenshot"
@@ -132,7 +132,7 @@ export default async function Home() {
                     className="object-cover"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent mix-blend-overlay" />
-                  <div className="pointer-events-none absolute -top-8 -left-12 h-32 w-48 rounded-full bg-white/3 opacity-30 blur-3xl" />
+                  <div className="pointer-events-none absolute -top-8 -left-12 h-32 w-48 rounded-full bg-[#f0ead6]/3 opacity-30 blur-3xl" />
                 </div>
               </div>
             </div>
