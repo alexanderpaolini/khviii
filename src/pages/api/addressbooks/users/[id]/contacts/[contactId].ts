@@ -44,42 +44,22 @@ function generateVCard(contact: ContactData): string {
   const lastName = contact.lastName ?? "";
   const fullName = `${firstName} ${lastName}`.trim() || "Unknown";
 
-  let vcard = `BEGIN:VCARD
-VERSION:3.0
-UID:${contact.id}
-FN:${fullName}
-N:${lastName};${firstName};;;`;
+  let vcard = `BEGIN:VCARD\nVERSION:4.0\nUID:${contact.id}\nFN:${fullName}\nN:${lastName};${firstName};;;`;
 
-  if (contact.email) {
-    vcard += `\nEMAIL;TYPE=INTERNET:${contact.email}`;
-  }
-  if (contact.phoneNumber) {
-    vcard += `\nTEL;TYPE=CELL:${contact.phoneNumber}`;
-  }
-  if (contact.nickname) {
-    vcard += `\nNICKNAME:${contact.nickname}`;
-  }
-  if (contact.instagram) {
-    vcard += `\nX-SOCIALPROFILE;TYPE=instagram:${contact.instagram}`;
-  }
-  if (contact.discord) {
-    vcard += `\nX-SOCIALPROFILE;TYPE=discord:${contact.discord}`;
-  }
-  if (contact.company) {
-    vcard += `\nORG:${contact.company}`;
-  }
-  if (contact.address) {
-    vcard += `\nADR;TYPE=HOME:;;${contact.address};;;;`;
-  }
+  if (contact.email) vcard += `\nEMAIL;TYPE=INTERNET:${contact.email}`;
+  if (contact.phoneNumber) vcard += `\nTEL;TYPE=CELL:${contact.phoneNumber}`;
+  if (contact.nickname) vcard += `\nNICKNAME:${contact.nickname}`;
+  if (contact.instagram) vcard += `\nX-SOCIALPROFILE;TYPE=instagram:${contact.instagram}`;
+  if (contact.discord) vcard += `\nX-SOCIALPROFILE;TYPE=discord:${contact.discord}`;
+  if (contact.company) vcard += `\nORG:${contact.company}`;
+  if (contact.address) vcard += `\nADR;TYPE=HOME:;;${contact.address};;;;`;
   if (contact.birthday) {
     const year = contact.birthday.getFullYear();
     const month = String(contact.birthday.getMonth() + 1).padStart(2, "0");
     const day = String(contact.birthday.getDate()).padStart(2, "0");
     vcard += `\nBDAY:${year}${month}${day}`;
   }
-  if (contact.pronouns) {
-    vcard += `\nX-PRONOUNS:${contact.pronouns}`;
-  }
+  if (contact.pronouns) vcard += contact.pronouns ? `\nX-PRONOUNS:${contact.pronouns}` : ``;
 
   vcard += `\nREV:2024-01-01T00:00:00Z`;
   vcard += `\nEND:VCARD`;
@@ -98,7 +78,6 @@ export default async function handler(
     return;
   }
 
-  // Handle OPTIONS
   if (req.method === "OPTIONS") {
     res.setHeader("Allow", "OPTIONS, GET");
     res.setHeader("DAV", "1, 2, 3, addressbook");
@@ -112,24 +91,22 @@ export default async function handler(
     return;
   }
 
-  // Validate authentication
   const auth = await validateBasicAuth(req);
   if (!auth.authenticated || !auth.userId) {
     sendUnauthorized(res);
     return;
   }
 
-  // Verify user can only access their own contacts
   if (auth.userId !== id) {
     res.status(403).send("Forbidden");
     return;
   }
 
-  // Remove .vcf extension if present
+  // remove extension from contactid
   const cleanContactId = contactId.replace(/\.vcf$/, "");
 
+  // try and find the requested contact, if it's real and they're friends, serve it
   try {
-    // Look up the requested contact
     const contact = await db.contact.findUnique({
       where: { id: cleanContactId },
       include: {
@@ -147,7 +124,6 @@ export default async function handler(
       return;
     }
 
-    // Verify the authenticated user is friends with the contact's owner
     const isFriend =
       contact.user.friendsA.length > 0 || contact.user.friendsB.length > 0;
 
