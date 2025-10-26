@@ -6,7 +6,6 @@ import { InputGroup } from "~/components/ui/input-group";
 import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 export function ContactInput() {
   const { data } = api.contact.get.useQuery();
@@ -28,16 +27,17 @@ export function ContactInput() {
   const updateContact = api.contact.update.useMutation();
 
   const handleSave = () => {
-    toast.promise(
-      updateContact.mutateAsync({ nickname, firstName, lastName, email }),
+    updateContact.mutate(
+      { nickname, firstName, lastName, email },
       {
-        loading: "Updating contact...",
-        success: async () => {
+        onSuccess: async () => {
+          console.log("Contact updated successfully");
           await utils.contact.get.refetch();
-          return "Contact updated";
         },
-        error: (e?: Error) => e?.message ?? "Failed to update contact",
-      },
+        onError: (error) => {
+          console.error("Failed to update contact:", error.message);
+        },
+      }
     );
   };
 

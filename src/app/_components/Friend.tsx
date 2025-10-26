@@ -4,7 +4,6 @@ import type { Contact, Friend } from "@prisma/client";
 import { useState, type FormEvent } from "react";
 import { Label } from "@radix-ui/react-label";
 import { Cross, X } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   DialogFooter,
@@ -31,14 +30,18 @@ function Friend({ friend }: { friend: Contact }) {
   const route = api.friend.remove.useMutation();
 
   const handleRemove = () => {
-    toast.promise(route.mutateAsync({ id: friend.userId }), {
-      success: async () => {
-        await utils.friend.getAll.refetch();
-        return `Removed ${friend.firstName}`;
-      },
-      loading: "Removing...",
-      error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
-    });
+    route.mutate(
+      { id: friend.userId },
+      {
+        onSuccess: async () => {
+          console.log(`Removed ${friend.firstName}`);
+          await utils.friend.getAll.refetch();
+        },
+        onError: (error) => {
+          console.error("Failed to remove friend:", error.message);
+        },
+      }
+    );
   };
 
   return (
@@ -105,37 +108,47 @@ export function FriendsList() {
 }
 export function FriendDialogue() {
   const [friendCode, setFriendCode] = useState<undefined | string>(undefined);
+  const [message, setMessage] = useState<undefined | string>(undefined);
   const utils = api.useUtils();
-  const route = api.friend.add.useMutation();
+  const route = api.friend.sendFriendRequest.useMutation();
   const [open, setOpen] = useState(false);
 
   function handleSubmit() {
     if (!friendCode) {
-      toast.error("Missing friend code");
+      console.error("Missing friend code");
       return;
     }
 
-    toast.promise(route.mutateAsync({ friendCode }), {
-      success: async (d) => {
-        await utils.friend.getAll.refetch();
-        setOpen(false);
-        return `Friended ${d.userB.contact!.firstName}`;
+    route.mutate(
+      { 
+        friendCode,
+        message: message?.trim() || undefined
       },
-      loading: "Loading...",
-      error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
-    });
+      {
+        onSuccess: async (d) => {
+          console.log(`Friend request sent to ${d.receiver.contact?.firstName || d.receiver.name}`);
+          await utils.friend.getPendingRequests.refetch();
+          setOpen(false);
+          setFriendCode(undefined);
+          setMessage(undefined);
+        },
+        onError: (error) => {
+          console.error("Failed to send friend request:", error.message);
+        },
+      }
+    );
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Add Friend</Button>
+        <Button>Send Friend Request</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Friend</DialogTitle>
+          <DialogTitle>Send Friend Request</DialogTitle>
           <DialogDescription>
-            Add a friend by entering their friend code below.
+            Send a friend request by entering their friend code below. You can optionally include a message.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
@@ -146,16 +159,28 @@ export function FriendDialogue() {
               name="friendCode"
               placeholder="alpha-beta-omega"
               aria-label="Friend Code"
+              value={friendCode || ""}
               onChange={(e) => setFriendCode(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-3">
+            <Label htmlFor="message">Message (Optional)</Label>
+            <Input
+              id="message"
+              name="message"
+              placeholder="Hey! Let's be friends!"
+              aria-label="Friend Request Message"
+              value={message || ""}
+              onChange={(e) => setMessage(e.target.value)}
             />
           </div>
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button>Cancel</Button>
+            <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button type="submit" onClick={() => handleSubmit()}>
-            Submit
+          <Button type="submit" onClick={() => handleSubmit()} disabled={route.isPending}>
+            {route.isPending ? "Sending..." : "Send Request"}
           </Button>
         </DialogFooter>
       </DialogContent>

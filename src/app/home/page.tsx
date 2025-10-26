@@ -5,6 +5,7 @@ import { HydrateClient } from "~/trpc/server";
 import { FriendsList } from "../_components/Friend";
 import { ContactInput } from "../_components/Contact";
 import { SignOutButton } from "../_components/Auth";
+import { FriendRequestButton } from "../_components/FriendRequestButton";
 import { api } from "~/trpc/server";
 
 export default async function Home() {
@@ -14,6 +15,7 @@ export default async function Home() {
 
   await api.contact.get.prefetch();
   await api.friend.getAll.prefetch();
+  await api.friend.getPendingRequests.prefetch();
 
   return (
     <HydrateClient>
@@ -32,6 +34,7 @@ export default async function Home() {
             </div>
           </div>
         </div>
+        <FriendRequestButton />
       </main>
     </HydrateClient>
   );
