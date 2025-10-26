@@ -7,6 +7,7 @@ import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
 export function ContactInput() {
   const { data } = api.contact.get.useQuery();
 
@@ -23,9 +24,22 @@ export function ContactInput() {
     setEmail(data.email ?? "");
   }, [data]);
 
-  function handleSave() {
-    toast(JSON.stringify({ nickname, firstName, lastName, email }));
-  }
+  const utils = api.useUtils();
+  const updateContact = api.contact.update.useMutation();
+
+  const handleSave = () => {
+    toast.promise(
+      updateContact.mutateAsync({ nickname, firstName, lastName, email }),
+      {
+        loading: "Updating contact...",
+        success: async () => {
+          await utils.contact.get.refetch();
+          return "Contact updated";
+        },
+        error: (e?: Error) => e?.message ?? "Failed to update contact",
+      },
+    );
+  };
 
   return (
     <div className="rounded-xl bg-white/5 p-6 shadow-md backdrop-blur-sm">

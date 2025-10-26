@@ -27,8 +27,18 @@ import { api } from "~/trpc/react";
 function Friend({ friend }: { friend: Contact }) {
   const initials = friend.firstName[0] + (friend.lastName?.[0] ?? "");
 
+  const utils = api.useUtils();
+  const route = api.friend.remove.useMutation();
+
   const handleRemove = () => {
-    toast(`REMOVE ${friend.userId}`);
+    toast.promise(route.mutateAsync({ id: friend.userId }), {
+      success: async () => {
+        await utils.friend.getAll.refetch();
+        return `Removed ${friend.firstName}`;
+      },
+      loading: "Removing...",
+      error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
+    });
   };
 
   return (
@@ -67,7 +77,7 @@ function Friend({ friend }: { friend: Contact }) {
 }
 
 export function FriendsList() {
-  const { data, isLoading } = api.friend.getAll.useQuery();
+  const { data } = api.friend.getAll.useQuery();
 
   const friends: Contact[] = data ?? [];
 
@@ -95,6 +105,9 @@ export function FriendsList() {
 }
 export function FriendDialogue() {
   const [friendCode, setFriendCode] = useState<undefined | string>(undefined);
+  const utils = api.useUtils();
+  const route = api.friend.add.useMutation();
+  const [open, setOpen] = useState(false);
 
   function handleSubmit() {
     if (!friendCode) {
@@ -102,11 +115,19 @@ export function FriendDialogue() {
       return;
     }
 
-    toast(`ADD ${friendCode}`);
+    toast.promise(route.mutateAsync({ friendCode }), {
+      success: async (d) => {
+        await utils.friend.getAll.refetch();
+        setOpen(false);
+        return `Friended ${d.userB.contact!.firstName}`;
+      },
+      loading: "Loading...",
+      error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
+    });
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>Add Friend</Button>
       </DialogTrigger>

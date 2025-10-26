@@ -17,7 +17,7 @@ export const contactRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       await ctx.db.contact.update({
-        where: { id: ctx.session.user.id },
+        where: { userId: ctx.session.user.id },
         data: input,
       });
       return { success: true };
