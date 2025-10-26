@@ -6,7 +6,7 @@ import { InputGroup } from "~/components/ui/input-group";
 import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 import { useEffect, useState } from "react";
-
+import { toast } from "sonner";
 export function ContactInput() {
   const { data } = api.contact.get.useQuery();
 
@@ -15,29 +15,51 @@ export function ContactInput() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
 
+  // keep original values to detect changes (dirty state)
+  const [original, setOriginal] = useState({
+    nickname: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+  });
+
   useEffect(() => {
     if (!data) return;
-    setNickname(data.nickname ?? "");
-    setFirstName(data.firstName ?? "");
-    setLastName(data.lastName ?? "");
-    setEmail(data.email ?? "");
+    const o = {
+      nickname: data.nickname ?? "",
+      firstName: data.firstName ?? "",
+      lastName: data.lastName ?? "",
+      email: data.email ?? "",
+    };
+    setOriginal(o);
+    setNickname(o.nickname);
+    setFirstName(o.firstName);
+    setLastName(o.lastName);
+    setEmail(o.email);
   }, [data]);
 
   const utils = api.useUtils();
   const updateContact = api.contact.update.useMutation();
 
+  const isDirty =
+    nickname !== original.nickname ||
+    firstName !== original.firstName ||
+    lastName !== original.lastName ||
+    email !== original.email;
+
   const handleSave = () => {
-    updateContact.mutate(
-      { nickname, firstName, lastName, email },
+    toast.promise(
+      updateContact.mutateAsync({ nickname, firstName, lastName, email }),
       {
-        onSuccess: async () => {
-          console.log("Contact updated successfully");
+        success: async () => {
           await utils.contact.get.refetch();
+          // update original to current values so the form is no longer "dirty"
+          setOriginal({ nickname, firstName, lastName, email });
+          return "Contact updated successfully";
         },
-        onError: (error) => {
-          console.error("Failed to update contact:", error.message);
-        },
-      }
+        loading: "Saving...",
+        error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
+      },
     );
   };
 
@@ -92,7 +114,15 @@ export function ContactInput() {
         </InputGroup>
 
         <div className="mt-2 flex items-center justify-between gap-2">
-          <Button type="submit" onClick={() => handleSave()}>
+          <Button
+            type="submit"
+            onClick={() => handleSave()}
+            className={`transition-all duration-150 ${
+              isDirty
+                ? "ring-2 ring-offset-2 ring-blue-400 shadow-md"
+                : "opacity-90"
+            }`}
+          >
             Save
           </Button>
           <Label>Optional fields can be left blank</Label>

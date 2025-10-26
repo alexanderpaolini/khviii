@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "~/server/auth";
 import { HydrateClient } from "~/trpc/server";
-import LoginButton from "~/app/_components/LoginButton";
+import { LoginButton } from "./_components/Auth";
 
 export default async function Home() {
   const session = await auth();

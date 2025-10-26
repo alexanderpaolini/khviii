@@ -1,10 +1,11 @@
 "use client";
 
 import type { Contact, Friend } from "@prisma/client";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Label } from "@radix-ui/react-label";
-import { Cross, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { toast } from "sonner";
 import {
   DialogFooter,
   DialogHeader,
@@ -30,18 +31,14 @@ function Friend({ friend }: { friend: Contact }) {
   const route = api.friend.remove.useMutation();
 
   const handleRemove = () => {
-    route.mutate(
-      { id: friend.userId },
-      {
-        onSuccess: async () => {
-          console.log(`Removed ${friend.firstName}`);
-          await utils.friend.getAll.refetch();
-        },
-        onError: (error) => {
-          console.error("Failed to remove friend:", error.message);
-        },
-      }
-    );
+    toast.promise(route.mutateAsync({ id: friend.userId }), {
+      success: async () => {
+        await utils.friend.getAll.refetch();
+        return `Removed ${friend.firstName}`;
+      },
+      loading: "Removing...",
+      error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
+    });
   };
 
   return (
@@ -119,23 +116,22 @@ export function FriendDialogue() {
       return;
     }
 
-    route.mutate(
-      { 
+    toast.promise(
+      route.mutateAsync({
         friendCode,
-        message: message?.trim() || undefined
-      },
+        message: message?.trim() ?? undefined,
+      }),
       {
-        onSuccess: async (d) => {
-          console.log(`Friend request sent to ${d.receiver.contact?.firstName || d.receiver.name}`);
+        success: async (d) => {
           await utils.friend.getPendingRequests.refetch();
           setOpen(false);
           setFriendCode(undefined);
           setMessage(undefined);
+          return `Friend request sent to ${d.receiver.contact!.firstName}`;
         },
-        onError: (error) => {
-          console.error("Failed to send friend request:", error.message);
-        },
-      }
+        loading: "Sending...",
+        error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
+      },
     );
   }
 
@@ -148,7 +144,8 @@ export function FriendDialogue() {
         <DialogHeader>
           <DialogTitle>Send Friend Request</DialogTitle>
           <DialogDescription>
-            Send a friend request by entering their friend code below. You can optionally include a message.
+            Send a friend request by entering their friend code below. You can
+            optionally include a message.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
@@ -159,7 +156,7 @@ export function FriendDialogue() {
               name="friendCode"
               placeholder="alpha-beta-omega"
               aria-label="Friend Code"
-              value={friendCode || ""}
+              value={friendCode ?? ""}
               onChange={(e) => setFriendCode(e.target.value)}
             />
           </div>
@@ -170,7 +167,7 @@ export function FriendDialogue() {
               name="message"
               placeholder="Hey! Let's be friends!"
               aria-label="Friend Request Message"
-              value={message || ""}
+              value={message ?? ""}
               onChange={(e) => setMessage(e.target.value)}
             />
           </div>
@@ -179,7 +176,11 @@ export function FriendDialogue() {
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button type="submit" onClick={() => handleSubmit()} disabled={route.isPending}>
+          <Button
+            type="submit"
+            onClick={() => handleSubmit()}
+            disabled={route.isPending}
+          >
             {route.isPending ? "Sending..." : "Send Request"}
           </Button>
         </DialogFooter>

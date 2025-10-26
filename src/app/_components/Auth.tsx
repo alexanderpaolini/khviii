@@ -1,54 +1,115 @@
 "use client";
 
 import { useState } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { FcGoogle } from "react-icons/fc";
+import { FaGithub, FaDiscord } from "react-icons/fa";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "~/components/ui/dialog";
+import { Button } from "~/components/ui/button";
+import { Separator } from "@radix-ui/react-separator";
 
 export function SignOutButton() {
-  const [confirming, setConfirming] = useState(false);
+  const [open, setOpen] = useState(false);
   const router = useRouter();
 
   const handleSignOut = async () => {
+    setOpen(false);
+
     await signOut({ redirect: false });
+
     router.push("/"); // redirect home after successful sign-out
   };
 
   return (
-    <>
-      {/* Main Sign Out Button */}
-      <div className="flex flex-col items-center justify-center gap-4">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <button
-          onClick={() => setConfirming(true)}
+          onClick={() => setOpen(true)}
           className="rounded-full bg-purple-500 px-10 py-3 font-semibold text-white transition hover:bg-purple-600"
         >
           Sign Out
         </button>
-      </div>
+      </DialogTrigger>
 
-      {/* Confirmation Modal */}
-      {confirming && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl shadow-lg w-95 text-center animate-fadeIn">
-            <p className="text-lg font-semibold mb-4">
-              Are you sure you want to sign out?
-            </p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={handleSignOut}
-                className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600 transition"
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setConfirming(false)}
-                className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400 transition"
-              >
-                No
-              </button>
-            </div>
-          </div>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Are you sure you want to sign out?</DialogTitle>
+        </DialogHeader>
+
+        <div className="mt-4 flex justify-center gap-3">
+          <Separator className="my-4" />
+
+          <Button onClick={() => handleSignOut()}>Yes</Button>
+
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
         </div>
-      )}
-    </>
+      </DialogContent>
+    </Dialog>
+  );
+}
+export function LoginButton() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <button className="rounded-full bg-white/10 px-10 py-3 font-semibold transition hover:bg-white/20">
+          Sign in
+        </button>
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Sign in</DialogTitle>
+          <div className="text-muted-foreground text-sm">
+            Choose a provider to continue. You&apos;ll be redirected after
+            signing in.
+          </div>
+        </DialogHeader>
+
+        <div className="grid gap-3">
+          <button
+            className="flex w-full items-center justify-center gap-3 rounded border border-gray-300 bg-white p-2 font-semibold hover:opacity-90"
+            onClick={() => signIn("google", { callbackUrl: "/home" })}
+          >
+            <FcGoogle size={20} />
+            Continue with Google
+          </button>
+
+          <button
+            className="flex w-full items-center justify-center gap-3 rounded bg-gray-800 p-2 font-semibold text-white hover:opacity-90"
+            onClick={() => signIn("github", { callbackUrl: "/home" })}
+          >
+            <FaGithub size={20} />
+            Continue with GitHub
+          </button>
+
+          <button
+            className="flex w-full items-center justify-center gap-3 rounded bg-indigo-600 p-2 font-semibold text-white hover:opacity-90"
+            onClick={() => signIn("discord", { callbackUrl: "/home" })}
+          >
+            <FaDiscord size={20} />
+            Continue with Discord
+          </button>
+        </div>
+
+        <DialogFooter className="flex justify-end">
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
