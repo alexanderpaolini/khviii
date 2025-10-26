@@ -26,6 +26,7 @@ function generateETag(contact: ContactData): string {
     email: contact.email,
     instagram: contact.instagram,
     discord: contact.discord,
+    linkedin: contact.linkedin,
     pronouns: contact.pronouns,
     company: contact.company,
     address: contact.address,
@@ -87,6 +88,7 @@ interface ContactData {
   email: string | null;
   instagram: string | null;
   discord: string | null;
+  linkedin: string | null;
   pronouns: string | null;
   company: string | null;
   address: string | null;
@@ -99,19 +101,29 @@ function generateVCard(contact: ContactData): string {
   const fullName = `${firstName} ${lastName}`.trim() || "Unknown";
 
   let vcard = `BEGIN:VCARD\nVERSION:4.0\nUID:${contact.id}\nFN:${fullName}\nN:${lastName};${firstName};;;`;
+  let iloveapple = 1; // because of apple's weird social media inclusions for vcards since this is a dead format
 
   if (contact.email) vcard += `\nEMAIL;TYPE=INTERNET:${contact.email}`;
   if (contact.phoneNumber) vcard += `\nTEL;TYPE=CELL:${contact.phoneNumber}`;
   if (contact.nickname) vcard += `\nNICKNAME:${contact.nickname}`;
-  if (contact.instagram) vcard += `\nX-SOCIALPROFILE;TYPE=instagram:${contact.instagram}`;
-  if (contact.discord) vcard += `\nX-SOCIALPROFILE;TYPE=discord:${contact.discord}`;
+  if (contact.instagram) {
+    vcard += `\nitem${iloveapple}.X-SOCIALPROFILE;X-USER=${contact.instagram}:https://instagram.com/${contact.instagram}`
+    vcard += `\nitem${iloveapple}.X-ABLABEL:Instagram`
+    iloveapple++;
+  }
+  if (contact.discord) {
+    vcard += `\nitem${iloveapple}.X-SOCIALPROFILE;X-USER=${contact.discord}:https://discord.com`
+    vcard += `\nitem${iloveapple}.X-ABLABEL:Discord`
+    iloveapple++;
+  }
+  if (contact.linkedin) vcard += `\nX-SOCIALPROFILE;X-USER=${contact.linkedin};TYPE=linkedin:https://linkedin.com/in/${contact.linkedin}`;
   if (contact.company) vcard += `\nORG:${contact.company}`;
   if (contact.address) vcard += `\nADR;TYPE=HOME:;;${contact.address};;;;`;
   if (contact.birthday) {
     const year = contact.birthday.getFullYear();
     const month = String(contact.birthday.getMonth() + 1).padStart(2, "0");
     const day = String(contact.birthday.getDate()).padStart(2, "0");
-    vcard += `\nBDAY:${year}${month}${day}`;
+    vcard += `\nBDAY:${year}-${month}-${day}`;
   }
   if (contact.pronouns) vcard += contact.pronouns ? `\nX-PRONOUNS:${contact.pronouns}` : ``;
 
