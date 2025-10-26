@@ -38,25 +38,24 @@ export default async function handler(
     return;
   }
 
-  // Validate authentication
+  // our very real auth
   const auth = await validateBasicAuth(req);
   if (!auth.authenticated || !auth.userId) {
     sendUnauthorized(res);
     return;
   }
 
-  // Verify user can only access their own addressbooks
+  // user can only access their own addressbooks
   if (auth.userId !== id) {
     res.status(403).send("Forbidden");
     return;
   }
 
-  // Return addressbook collection information
+  //addressbook info
   const userId = escapeXml(id);
   const contactsHref = `/api/addressbooks/users/${userId}/contacts/`;
 
-  // Note: We use a placeholder ctag here since calculating it requires DB query
-  // Clients will fetch the real ctag when they PROPFIND the contacts collection with Depth:0
+  // this just says that the user only has contacbtooks/ as the address. we do not support multiple contact books.
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/">
   <response>
