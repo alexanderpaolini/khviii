@@ -2,6 +2,14 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
 
 export const contactRouter = createTRPCRouter({
+  friendCode: protectedProcedure.query(async ({ ctx }) => {
+    return {
+      friendCode: (
+        await ctx.db.user.findFirst({ where: { id: ctx.session.user.id } })
+      )?.friendCode,
+    };
+  }),
+
   get: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db.contact.findFirst({ where: { userId: ctx.session.user.id } });
   }),

@@ -98,42 +98,22 @@ function generateVCard(contact: ContactData): string {
   const lastName = contact.lastName ?? "";
   const fullName = `${firstName} ${lastName}`.trim() || "Unknown";
 
-  let vcard = `BEGIN:VCARD
-VERSION:4.0
-UID:${contact.id}
-FN:${fullName}
-N:${lastName};${firstName};;;`;
+  let vcard = `BEGIN:VCARD\nVERSION:4.0\nUID:${contact.id}\nFN:${fullName}\nN:${lastName};${firstName};;;`;
 
-  if (contact.email) {
-    vcard += `\nEMAIL;TYPE=work:${contact.email}`;
-  }
-  if (contact.phoneNumber) {
-    vcard += `\nTEL;TYPE="voice,cell":${contact.phoneNumber}`;
-  }
-  if (contact.nickname) {
-    vcard += `\nNICKNAME:${contact.nickname}`;
-  }
-  if (contact.instagram) {
-    vcard += `\nX-SOCIALPROFILE;TYPE=instagram:${contact.instagram}`;
-  }
-  if (contact.discord) {
-    vcard += `\nX-SOCIALPROFILE;TYPE=discord:${contact.discord}`;
-  }
-  if (contact.company) {
-    vcard += `\nORG:${contact.company}`;
-  }
-  if (contact.address) {
-    vcard += `\nADR;TYPE=home:;;${contact.address};;;;`;
-  }
+  if (contact.email) vcard += `\nEMAIL;TYPE=INTERNET:${contact.email}`;
+  if (contact.phoneNumber) vcard += `\nTEL;TYPE=CELL:${contact.phoneNumber}`;
+  if (contact.nickname) vcard += `\nNICKNAME:${contact.nickname}`;
+  if (contact.instagram) vcard += `\nX-SOCIALPROFILE;TYPE=instagram:${contact.instagram}`;
+  if (contact.discord) vcard += `\nX-SOCIALPROFILE;TYPE=discord:${contact.discord}`;
+  if (contact.company) vcard += `\nORG:${contact.company}`;
+  if (contact.address) vcard += `\nADR;TYPE=HOME:;;${contact.address};;;;`;
   if (contact.birthday) {
     const year = contact.birthday.getFullYear();
     const month = String(contact.birthday.getMonth() + 1).padStart(2, "0");
     const day = String(contact.birthday.getDate()).padStart(2, "0");
     vcard += `\nBDAY:${year}${month}${day}`;
   }
-  if (contact.pronouns) {
-    vcard += `\nX-PRONOUNS:${contact.pronouns}`;
-  }
+  if (contact.pronouns) vcard += contact.pronouns ? `\nX-PRONOUNS:${contact.pronouns}` : ``;
 
   vcard += `\nREV:2024-01-01T00:00:00Z`;
   vcard += `\nEND:VCARD`;
@@ -237,6 +217,7 @@ export default async function handler(
         console.log(`[CONTACTS]   Depth:0 - ${name} (${c.id})`);
       });
 
+      // i hate multiline strings like this
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/">
   <response>
@@ -268,9 +249,8 @@ export default async function handler(
     }
   }
 
-  // Query database for user and their friends' contacts
+  // find user relations
   try {
-    // Look up user by ID
     const user = await db.user.findUnique({
       where: { id: id },
       include: {
@@ -296,56 +276,46 @@ export default async function handler(
       return;
     }
 
-    // Collect all friends' contacts
+    // flatten that
     const friendContacts: ContactData[] = [];
 
-    // Add contacts from friendsA (where user is userA)
     for (const friendship of user.friendsA) {
       if (friendship.userB.contact) {
         friendContacts.push(friendship.userB.contact);
       }
     }
-
-    // Add contacts from friendsB (where user is userB)
     for (const friendship of user.friendsB) {
       if (friendship.userA.contact) {
         friendContacts.push(friendship.userA.contact);
       }
     }
 
-    // Handle REPORT method
+
+    // REPORT requested
     if (req.method === "REPORT") {
-      // Check if this is a sync-collection request
       const requestBody = req.body?.toString() || '';
       const isSyncCollection = requestBody.includes('sync-collection') || requestBody.includes('sync-token');
 
       if (isSyncCollection) {
-        // Extract the old sync-token from request
+        // we are resyncing
         const oldTokenMatch = requestBody.match(/<sync-token>(.*?)<\/sync-token>/);
+
         const oldSyncToken = oldTokenMatch ? oldTokenMatch[1] : null;
-
-        // Decode old sync token to get previous contact IDs
-        const previousContacts = oldSyncToken ? decodeSyncToken(oldSyncToken) : new Map<string, string>();
-
-        // Generate new sync token based on current state
         const newSyncToken = encodeSyncToken(friendContacts);
 
-        // Build current contact ID set
+        const previousContacts = oldSyncToken ? decodeSyncToken(oldSyncToken) : new Map<string, string>();
         const currentContactIds = new Set(friendContacts.map(c => c.id));
-
-        // Find deleted contacts (in previous but not in current)
         const deletedContactIds = Array.from(previousContacts.keys()).filter(
           id => !currentContactIds.has(id)
         );
 
+        // logging
         console.log(`[CONTACTS] Sync-collection REPORT - Old token: ${oldSyncToken?.substring(0, 20)}...`);
         console.log(`[CONTACTS] Previous: ${previousContacts.size} contacts, Current: ${friendContacts.length} contacts`);
         console.log(`[CONTACTS] Deleted: ${deletedContactIds.length} contacts`);
-        if (deletedContactIds.length > 0) {
-          console.log(`[CONTACTS] Deleted IDs: ${deletedContactIds.join(', ')}`);
-        }
+        
+        if (deletedContactIds.length > 0) console.log(`[CONTACTS] Deleted IDs: ${deletedContactIds.join(', ')}`);
 
-        // Build response entries for current contacts
         const currentEntries = friendContacts.map((contact) => {
           const href = `/api/addressbooks/users/${userId}/contacts/${contact.id}.vcf`;
           const etag = generateETag(contact);

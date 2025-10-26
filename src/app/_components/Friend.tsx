@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { api } from "~/trpc/react";
+import { useSession } from "next-auth/react";
 
 function Friend({ friend }: { friend: Contact }) {
   const initials = friend.firstName[0] + (friend.lastName?.[0] ?? "");
@@ -86,6 +87,9 @@ function Friend({ friend }: { friend: Contact }) {
 }
 
 export function FriendsList() {
+  const { data: session } = useSession();
+
+  const { data: fc } = api.contact.friendCode.useQuery();
   const { data } = api.friend.getAll.useQuery();
 
   const friends: Contact[] = data ?? [];
@@ -122,6 +126,13 @@ export function FriendsList() {
 
           {/* Add Friend Button */}
           <div className="pt-4 border-t border-white/10 mt-4">
+          <div className="mt-2 flex items-center justify-between px-2">
+            <span className="text-sm font-medium">
+              Friend Code:
+              <span className="ml-2 font-mono text-sm">
+                {fc?.friendCode ?? "Loading..."}
+              </span>
+            </span>
             <FriendDialogue />
           </div>
         </div>

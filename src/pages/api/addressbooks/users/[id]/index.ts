@@ -20,7 +20,7 @@ export default async function handler(
   const { id } = req.query;
 
   if (!id || Array.isArray(id)) {
-    res.status(400).send("Missing or invalid user ID");
+    return res.status(400).send("Missing or invalid user ID");
     return;
   }
 
@@ -51,7 +51,7 @@ export default async function handler(
     return;
   }
 
-  //addressbook info
+  // addressbook info
   const userId = escapeXml(id);
   const contactsHref = `/api/addressbooks/users/${userId}/contacts/`;
 
