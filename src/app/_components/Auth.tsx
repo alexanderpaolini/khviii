@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signOut, signIn } from "next-auth/react";
+import { signOut, signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub, FaDiscord } from "react-icons/fa";
@@ -16,6 +16,7 @@ import {
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { Separator } from "@radix-ui/react-separator";
+import Link from "next/link";
 
 export function SignOutButton() {
   const [open, setOpen] = useState(false);
@@ -53,13 +54,25 @@ export function SignOutButton() {
     </Dialog>
   );
 }
+
 export function LoginButton() {
+  const { data: session } = useSession();
+
   const [isOpen, setIsOpen] = useState(false);
+
+  if (session)
+    return (
+      <Button asChild>
+        <Link href="/home" className="inline-block">
+          Get started!
+        </Link>
+      </Button>
+    );
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Sign in</Button>
+        <Button>Get started!</Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">

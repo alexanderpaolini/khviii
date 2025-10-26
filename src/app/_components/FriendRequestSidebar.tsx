@@ -20,21 +20,21 @@ export function FriendRequestSidebar({
     api.friend.getPendingRequests.useQuery();
   const respondToRequest = api.friend.respondToRequest.useMutation();
   const sendFriendRequest = api.friend.sendFriendRequest.useMutation();
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
-  
-  // Search users with debouncing
-  const { data: searchResults, isLoading: isSearching } = api.friend.searchUsers.useQuery(
-    { query: searchQuery },
-    { 
-      enabled: searchQuery.length > 2,
-      refetchOnWindowFocus: false,
-    }
-  );
 
-  // Prevent body scroll when sidebar is open
+  // Search users with debouncing
+  const { data: searchResults, isLoading: isSearching } =
+    api.friend.searchUsers.useQuery(
+      { query: searchQuery },
+      {
+        enabled: searchQuery.length > 2,
+        refetchOnWindowFocus: false,
+      },
+    );
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -66,7 +66,10 @@ export function FriendRequestSidebar({
     }
   };
 
-  const handleSendFriendRequest = async (friendCode: string, message?: string) => {
+  const handleSendFriendRequest = async (
+    friendCode: string,
+    message?: string,
+  ) => {
     try {
       await sendFriendRequest.mutateAsync({ friendCode, message });
       console.log("Friend request sent successfully!");

@@ -43,11 +43,11 @@ export function HowToDialogue() {
         <div className="mt-2 space-y-4">
           <p>Server URL:</p>
           <div className="mt-1 flex justify-between space-x-2">
-            <span className="font-mono">TEMP URL</span>
+            <span className="font-mono">davecard.paolini.dev</span>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => copy("TEMP URL")}
+              onClick={() => copy("davecard.paolini.dev")}
             >
               Copy URL
             </Button>
@@ -68,7 +68,7 @@ export function HowToDialogue() {
           </div>
           <p>Password:</p>
           <div className="mt-1 flex justify-between space-x-2">
-            <span className="font-mono">
+            <span className="font-mono items-center">
               {session?.user?.id ? "(same as username)" : "sign in to view"}
             </span>
             <Button
