@@ -4,6 +4,7 @@ import { auth } from "~/server/auth";
 import { HydrateClient } from "~/trpc/server";
 import { FriendsList } from "../_components/Friend";
 import { ContactInput } from "../_components/Contact";
+import { BusinessCard } from "../_components/BusinessCard";
 import { SignOutButton } from "../_components/Auth";
 import { FriendRequestButton } from "../_components/FriendRequestButton";
 import { api } from "~/trpc/server";
@@ -36,6 +37,11 @@ export default async function Home() {
               <div className="w-full max-w-md">
                 <FriendsList />
               </div>
+            </div>
+
+            {/* Business Card Section */}
+            <div className="w-full max-w-4xl">
+              <BusinessCard />
             </div>
           </div>
 
