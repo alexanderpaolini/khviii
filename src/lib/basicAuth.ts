@@ -1,16 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { db } from "~/server/db";
 
 export interface AuthResult {
   authenticated: boolean;
   userId?: string;
 }
 
-/**
- * Simple basic auth validator
- * For MVP: accepts any username/password combination
- * The username becomes the userId
- */
-export function validateBasicAuth(req: NextApiRequest): AuthResult {
+export async function validateBasicAuth(
+  req: NextApiRequest,
+): Promise<AuthResult> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith("Basic ")) {
@@ -18,7 +16,6 @@ export function validateBasicAuth(req: NextApiRequest): AuthResult {
   }
 
   try {
-    // Decode Basic auth header
     const base64Credentials = authHeader.substring(6);
     const credentials = Buffer.from(base64Credentials, "base64").toString(
       "utf-8",
@@ -29,19 +26,26 @@ export function validateBasicAuth(req: NextApiRequest): AuthResult {
       return { authenticated: false };
     }
 
-    // For MVP: accept any credentials, use username as userId
+    const user = await db.user.findUnique({
+      where: { id: username },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return { authenticated: false };
+    }
+
     return {
       authenticated: true,
-      userId: username,
+      userId: user.id,
     };
   } catch (err) {
+    console.error("Auth error:", err);
     return { authenticated: false };
   }
 }
 
-/**
- * Sends 401 Unauthorized response
- */
+// used rarely, we really aren't caring about auth that much
 export function sendUnauthorized(res: NextApiResponse): void {
   res.status(401);
   res.setHeader("WWW-Authenticate", 'Basic realm="CardDAV Server"');

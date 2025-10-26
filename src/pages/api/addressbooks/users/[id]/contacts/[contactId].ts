@@ -1,50 +1,96 @@
+import { db } from "~/server/db";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { validateBasicAuth, sendUnauthorized } from "~/lib/basicAuth";
+import crypto from "crypto";
 
-// Dummy static contacts data (same as in index.ts)
-const DUMMY_CONTACTS = [
-  {
-    id: "contact-1",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+1-555-0100",
-  },
-  {
-    id: "contact-2",
-    firstName: "Jane",
-    lastName: "Smith",
-    email: "jane.smith@example.com",
-    phone: "+1-555-0200",
-  },
-  {
-    id: "contact-3",
-    firstName: "Bob",
-    lastName: "Johnson",
-    email: "bob.johnson@example.com",
-    phone: "+1-555-0300",
-  },
-];
+interface ContactData {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  nickname: string | null;
+  phoneNumber: string | null;
+  email: string | null;
+  instagram: string | null;
+  discord: string | null;
+  pronouns: string | null;
+  company: string | null;
+  address: string | null;
+  birthday: Date | null;
+}
 
-function generateVCard(contact: (typeof DUMMY_CONTACTS)[0]): string {
-  const fullName = `${contact.firstName} ${contact.lastName}`.trim();
+function generateETag(contact: ContactData): string {
+  // Create a stable hash based on all contact fields
+  const contactData = JSON.stringify({
+    id: contact.id,
+    firstName: contact.firstName,
+    lastName: contact.lastName,
+    nickname: contact.nickname,
+    phoneNumber: contact.phoneNumber,
+    email: contact.email,
+    instagram: contact.instagram,
+    discord: contact.discord,
+    pronouns: contact.pronouns,
+    company: contact.company,
+    address: contact.address,
+    birthday: contact.birthday?.toISOString(),
+  });
 
-  // vCard 3.0 format
-  return `BEGIN:VCARD
+  const hash = crypto.createHash("md5").update(contactData).digest("hex");
+  return `"${contact.id}-${hash.substring(0, 8)}"`;
+}
+
+function generateVCard(contact: ContactData): string {
+  const firstName = contact.firstName ?? "";
+  const lastName = contact.lastName ?? "";
+  const fullName = `${firstName} ${lastName}`.trim() || "Unknown";
+
+  let vcard = `BEGIN:VCARD
 VERSION:3.0
 UID:${contact.id}
 FN:${fullName}
-N:${contact.lastName};${contact.firstName};;;
-EMAIL;TYPE=INTERNET:${contact.email}
-TEL;TYPE=CELL:${contact.phone}
-REV:2024-01-01T00:00:00Z
-END:VCARD`;
+N:${lastName};${firstName};;;`;
+
+  if (contact.email) {
+    vcard += `\nEMAIL;TYPE=INTERNET:${contact.email}`;
+  }
+  if (contact.phoneNumber) {
+    vcard += `\nTEL;TYPE=CELL:${contact.phoneNumber}`;
+  }
+  if (contact.nickname) {
+    vcard += `\nNICKNAME:${contact.nickname}`;
+  }
+  if (contact.instagram) {
+    vcard += `\nX-SOCIALPROFILE;TYPE=instagram:${contact.instagram}`;
+  }
+  if (contact.discord) {
+    vcard += `\nX-SOCIALPROFILE;TYPE=discord:${contact.discord}`;
+  }
+  if (contact.company) {
+    vcard += `\nORG:${contact.company}`;
+  }
+  if (contact.address) {
+    vcard += `\nADR;TYPE=HOME:;;${contact.address};;;;`;
+  }
+  if (contact.birthday) {
+    const year = contact.birthday.getFullYear();
+    const month = String(contact.birthday.getMonth() + 1).padStart(2, "0");
+    const day = String(contact.birthday.getDate()).padStart(2, "0");
+    vcard += `\nBDAY:${year}${month}${day}`;
+  }
+  if (contact.pronouns) {
+    vcard += `\nX-PRONOUNS:${contact.pronouns}`;
+  }
+
+  vcard += `\nREV:2024-01-01T00:00:00Z`;
+  vcard += `\nEND:VCARD`;
+
+  return vcard;
 }
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
-): void {
+): Promise<void> {
   const { id, contactId } = req.query;
 
   if (!id || Array.isArray(id) || !contactId || Array.isArray(contactId)) {
@@ -67,7 +113,7 @@ export default function handler(
   }
 
   // Validate authentication
-  const auth = validateBasicAuth(req);
+  const auth = await validateBasicAuth(req);
   if (!auth.authenticated || !auth.userId) {
     sendUnauthorized(res);
     return;
@@ -82,19 +128,44 @@ export default function handler(
   // Remove .vcf extension if present
   const cleanContactId = contactId.replace(/\.vcf$/, "");
 
-  // Find the contact
-  const contact = DUMMY_CONTACTS.find((c) => c.id === cleanContactId);
+  try {
+    // Look up the requested contact
+    const contact = await db.contact.findUnique({
+      where: { id: cleanContactId },
+      include: {
+        user: {
+          include: {
+            friendsA: { where: { userBId: id } },
+            friendsB: { where: { userAId: id } },
+          },
+        },
+      },
+    });
 
-  if (!contact) {
-    res.status(404).send("Contact not found");
-    return;
+    if (!contact) {
+      res.status(404).send("Contact not found");
+      return;
+    }
+
+    // Verify the authenticated user is friends with the contact's owner
+    const isFriend =
+      contact.user.friendsA.length > 0 || contact.user.friendsB.length > 0;
+
+    if (!isFriend) {
+      res.status(403).send("You are not friends with this user");
+      return;
+    }
+
+    // Generate and return vCard
+    const vcard = generateVCard(contact);
+    const etag = generateETag(contact);
+
+    res.status(200);
+    res.setHeader("Content-Type", "text/vcard; charset=utf-8");
+    res.setHeader("ETag", etag);
+    res.send(vcard);
+  } catch (error) {
+    console.error("Database error:", error);
+    res.status(500).send("Internal Server Error");
   }
-
-  // Generate and return vCard
-  const vcard = generateVCard(contact);
-
-  res.status(200);
-  res.setHeader("Content-Type", "text/vcard; charset=utf-8");
-  res.setHeader("ETag", `"${contact.id}-v1"`);
-  res.send(vcard);
 }

@@ -6,6 +6,7 @@ import { InputGroup } from "~/components/ui/input-group";
 import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function ContactInput() {
   const { data } = api.contact.get.useQuery();
@@ -28,52 +29,51 @@ export function ContactInput() {
   const [address, setAddress] = useState("");
   const [birthday, setBirthday] = useState("");
 
+  // keep original values to detect changes (dirty state)
+  const [original, setOriginal] = useState({
+    nickname: data?.nickname,
+    firstName: data?.firstName,
+    lastName: data?.lastName,
+    email: data?.email,
+  });
+
   useEffect(() => {
     if (!data) return;
-    setNickname(data.nickname ?? "");
-    setFirstName(data.firstName ?? "");
-    setLastName(data.lastName ?? "");
-    setPhoneNumber(data.phoneNumber ?? "");
-    setEmail(data.email ?? "");
-    setInstagram(data.instagram ?? "");
-    setDiscord(data.discord ?? "");
-    setLinkedin(data.linkedin ?? "");
-    setPronouns(data.pronouns ?? "");
-    setCompany(data.company ?? "");
-    setAddress(data.address ?? "");
-    setBirthday((data.birthday ? new Date(data.birthday).toISOString().split('T')[0] : "") || "");
+    const o = {
+      nickname: data.nickname ?? "",
+      firstName: data.firstName ?? "",
+      lastName: data.lastName ?? "",
+      email: data.email ?? "",
+    };
+    setOriginal(o);
+    setNickname(o.nickname);
+    setFirstName(o.firstName);
+    setLastName(o.lastName);
+    setEmail(o.email);
   }, [data]);
 
   const utils = api.useUtils();
   const updateContact = api.contact.update.useMutation();
 
+  const isDirty =
+    nickname !== original.nickname ||
+    firstName !== original.firstName ||
+    lastName !== original.lastName ||
+    email !== original.email;
+
   const handleSave = () => {
-    const birthdayDate = birthday ? new Date(birthday) : undefined;
-    
-    updateContact.mutate(
-      { 
-        nickname: nickname || undefined, 
-        firstName: firstName || undefined, 
-        lastName: lastName || undefined, 
-        phoneNumber: phoneNumber || undefined,
-        email: email || undefined,
-        instagram: instagram || undefined,
-        discord: discord || undefined,
-        linkedin: linkedin || undefined,
-        pronouns: pronouns || undefined,
-        company: company || undefined,
-        address: address || undefined,
-        birthday: birthdayDate
-      },
+    toast.promise(
+      updateContact.mutateAsync({ nickname, firstName, lastName, email }),
       {
-        onSuccess: async () => {
-          console.log("Contact updated successfully");
+        success: async () => {
           await utils.contact.get.refetch();
+          // update original to current values so the form is no longer "dirty"
+          setOriginal({ nickname, firstName, lastName, email });
+          return "Contact updated successfully";
         },
-        onError: (error) => {
-          console.error("Failed to update contact:", error.message);
-        },
-      }
+        loading: "Saving...",
+        error: (e?: Error) => e?.message ?? "An unknown error has occurred.",
+      },
     );
   };
 
@@ -226,14 +226,28 @@ export function ContactInput() {
           </InputGroup>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-2">
-          <Button 
-            type="submit" 
+        <InputGroup>
+          <Input
+            name="email"
+            type="email"
+            placeholder="Email"
+            aria-label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </InputGroup>
+
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <Button
+            type="submit"
             onClick={() => handleSave()}
-            disabled={updateContact.isPending}
-            className="bg-purple-600 hover:bg-purple-700"
+            className={`transition-all duration-150 ${
+              isDirty
+                ? "shadow-md ring-2 ring-blue-400 ring-offset-2"
+                : "opacity-90"
+            }`}
           >
-            {updateContact.isPending ? "Saving..." : "Save Contact"}
+            Save
           </Button>
           <Label className="text-xs text-gray-400">All fields are optional</Label>
         </div>
