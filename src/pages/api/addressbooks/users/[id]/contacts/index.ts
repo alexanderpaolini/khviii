@@ -99,16 +99,16 @@ function generateVCard(contact: ContactData): string {
   const fullName = `${firstName} ${lastName}`.trim() || "Unknown";
 
   let vcard = `BEGIN:VCARD
-VERSION:3.0
+VERSION:4.0
 UID:${contact.id}
 FN:${fullName}
 N:${lastName};${firstName};;;`;
 
   if (contact.email) {
-    vcard += `\nEMAIL;TYPE=INTERNET:${contact.email}`;
+    vcard += `\nEMAIL;TYPE=work:${contact.email}`;
   }
   if (contact.phoneNumber) {
-    vcard += `\nTEL;TYPE=CELL:${contact.phoneNumber}`;
+    vcard += `\nTEL;TYPE="voice,cell":${contact.phoneNumber}`;
   }
   if (contact.nickname) {
     vcard += `\nNICKNAME:${contact.nickname}`;
@@ -123,7 +123,7 @@ N:${lastName};${firstName};;;`;
     vcard += `\nORG:${contact.company}`;
   }
   if (contact.address) {
-    vcard += `\nADR;TYPE=HOME:;;${contact.address};;;;`;
+    vcard += `\nADR;TYPE=home:;;${contact.address};;;;`;
   }
   if (contact.birthday) {
     const year = contact.birthday.getFullYear();
