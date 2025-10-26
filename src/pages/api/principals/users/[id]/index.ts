@@ -13,10 +13,10 @@ function escapeXml(input?: string) {
   return input.replace(/[&<>"']/g, (ch) => map[ch] ?? ch);
 }
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
-): void {
+): Promise<void> {
   const { id } = req.query;
 
   if (!id || Array.isArray(id)) {
@@ -39,7 +39,7 @@ export default function handler(
   }
 
   // Validate authentication
-  const auth = validateBasicAuth(req);
+  const auth = await validateBasicAuth(req);
   if (!auth.authenticated || !auth.userId) {
     sendUnauthorized(res);
     return;

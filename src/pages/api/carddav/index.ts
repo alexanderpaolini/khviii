@@ -13,10 +13,10 @@ function escapeXml(input?: string) {
   return input.replace(/[&<>"']/g, (ch) => map[ch] ?? ch);
 }
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
-): void {
+): Promise<void> {
   // Handle OPTIONS for capability discovery
   if (req.method === "OPTIONS") {
     res.setHeader("Allow", "OPTIONS, PROPFIND");
@@ -32,7 +32,9 @@ export default function handler(
   }
 
   // Validate authentication
-  const auth = validateBasicAuth(req);
+  console.log('[CARDDAV] Auth header present:', !!req.headers.authorization);
+  const auth = await validateBasicAuth(req);
+  console.log('[CARDDAV] Auth result:', auth.authenticated ? `authenticated as ${auth.userId}` : 'failed');
   if (!auth.authenticated || !auth.userId) {
     sendUnauthorized(res);
     return;
