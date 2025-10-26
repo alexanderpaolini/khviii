@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { db } from "~/server/db";
 
 export interface AuthResult {
   authenticated: boolean;
@@ -7,10 +8,12 @@ export interface AuthResult {
 
 /**
  * Simple basic auth validator
- * For MVP: accepts any username/password combination
- * The username becomes the userId
+ * Looks up user by ID (username should be the user ID like "user-bob")
+ * For MVP: accepts any password
  */
-export function validateBasicAuth(req: NextApiRequest): AuthResult {
+export async function validateBasicAuth(
+  req: NextApiRequest,
+): Promise<AuthResult> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith("Basic ")) {
@@ -29,12 +32,23 @@ export function validateBasicAuth(req: NextApiRequest): AuthResult {
       return { authenticated: false };
     }
 
-    // For MVP: accept any credentials, use username as userId
+    // Look up user by ID (username = user ID like "user-bob")
+    const user = await db.user.findUnique({
+      where: { id: username },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return { authenticated: false };
+    }
+
+    // For MVP: accept any password, return actual user ID
     return {
       authenticated: true,
-      userId: username,
+      userId: user.id,
     };
   } catch (err) {
+    console.error("Auth error:", err);
     return { authenticated: false };
   }
 }
